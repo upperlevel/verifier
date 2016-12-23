@@ -7,4 +7,9 @@ public class ClientHandler {
     public ClientHandler(Connection connection) {
         this.connection = connection;
     }
+
+
+    public String toString() {
+        return "sender";
+    }
 }

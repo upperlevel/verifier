@@ -14,6 +14,8 @@ import me.upperlevel.verifier.packetlib.Connection;
 import me.upperlevel.verifier.packetlib.ServerConnectionInitializer;
 import me.upperlevel.verifier.packetlib.PacketManager;
 
+import java.nio.charset.StandardCharsets;
+
 public class Server {
     private final int port;
     @Getter
@@ -39,7 +41,9 @@ public class Server {
                     .channel(NioServerSocketChannel.class)
                     .option(ChannelOption.SO_BACKLOG, 100)
                     .handler(new LoggingHandler("Netty", LogLevel.INFO))
-                    .childHandler(new ServerConnectionInitializer<>(this::onConnect, packetManager));
+                    .childHandler(new ServerConnectionInitializer<>(this::onConnect, packetManager, true));
+
+            registerDefHandlers();
 
             // Start the server.
             ChannelFuture f = b.bind(port).sync();
@@ -50,6 +54,10 @@ public class Server {
             bossGroup.shutdownGracefully();
             workerGroup.shutdownGracefully();
         }
+    }
+
+    private void registerDefHandlers() {
+        packetManager.register("str", String.class, (String in) -> toString().getBytes(StandardCharsets.UTF_8), (byte[] in) -> new String(in, StandardCharsets.UTF_8));
     }
 
     public ClientHandler onConnect(Connection connection) {

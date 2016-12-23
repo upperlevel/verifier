@@ -19,6 +19,6 @@ public class MessageEncoder extends MessageToByteEncoder<Object> {
             byte[] data = handler.encode(msg);
             out.writeInt(data.length);
             out.writeBytes(data);
-        }
+        } else System.out.println("Error: failed to encode message (" + msg.getClass() + "): handler not found");
     }
 }

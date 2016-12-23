@@ -1,9 +1,10 @@
 package me.upperlevel.verifier.packetlib;
 
+import me.upperlevel.verifier.packetlib.defs.HandshakePacket;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -15,6 +16,7 @@ import static java.util.Objects.requireNonNull;
  * @param <S> The sender type (who sends the message)
  */
 public class PacketManager<S> {
+    private final short MIN_VALUE = Short.MIN_VALUE;
     private short nextID = Short.MIN_VALUE;
 
     public PacketHandler<?>[] packets = new PacketHandler[Short.MAX_VALUE - Short.MIN_VALUE];
@@ -25,6 +27,20 @@ public class PacketManager<S> {
 
     public PacketManager(Class<S> senderType) {
         messageListenerManager = new MessageListenerManager<>(senderType);
+        setupDefs();
+    }
+
+    private void setupDefs() {
+        register(HandshakePacket.HANDLER);
+    }
+
+
+    public PacketHandler<?> getId(short id) {
+        return packets[id - MIN_VALUE];
+    }
+
+    public void setId(short id, PacketHandler<?> packet){
+        packets[id - MIN_VALUE] = packet;
     }
 
     public <T> void register(String name, Class<T> clazz, Function<T, byte[]> encoder, Function<byte[], T> decoder) {
@@ -32,7 +48,7 @@ public class PacketManager<S> {
     }
 
     public void register(PacketHandler<?> handler) {
-        packets[nextID] =  handler;
+        setId(nextID, handler);
         handler.registerHandler(nextID);
         nextID++;
         class_mapped.put(handler.getClazz(), handler);
@@ -88,7 +104,7 @@ public class PacketManager<S> {
     }
 
     public PacketHandler<?> getHandler(int id) {
-        return packets[id];
+        return getId((short) id);
     }
 
     public PacketHandler<?> getHandler(Class<?> clazz) {
@@ -100,23 +116,59 @@ public class PacketManager<S> {
         return handler == null && clazz.getSuperclass() != null ? getHandlerContinued(clazz.getSuperclass()) : handler;
     }
 
+    public HandshakePacket getHandshake() {
+        List<String> packets_name = new ArrayList<>(nextID - Short.MIN_VALUE);
+
+        final int max = nextID - MIN_VALUE;
+        for(short i = 0; i < max; i++)
+            packets_name.add(packets[i].getName());
+
+        return new HandshakePacket(packets_name);
+    }
+
+    public void setHandshake(HandshakePacket packet) {
+        PacketHandler<?>[] new_packets = new PacketHandler[packets.length];
+        String[] names = packet.packets;
+        for (int i = 0; i < names.length; i++) {
+            new_packets[i] = getFromName(names[i]);
+            if(new_packets[i] == null)
+                System.err.println("WARNING! packet not registered!");
+            else
+                new_packets[i].registerHandler((short) (i + MIN_VALUE));
+        }
+        packets = new_packets;
+    }
+
+    private PacketHandler<?> getFromName(String name) {
+        Objects.requireNonNull(name);
+        final int max = nextID - MIN_VALUE;
+        for (int i = 0; i < max; i++) {
+            if(name.equals(packets[i].name))
+                return packets[i];
+        }
+        return null;
+    }
+
     public static abstract class PacketHandler<T> {
+        public static final int UNDEFINED = Integer.MAX_VALUE;
         public final String name;
         public final Class<T> clazz;
-        private int id = Short.MAX_VALUE;
+        private int id = UNDEFINED;
 
         public PacketHandler(String name, Class<T> clazz) {
-            this.name = requireNonNull(name);
+            if(name == null)
+                throw new IllegalArgumentException("The argument name is null!");
+            else if(name.length() > 128)
+                throw new IllegalArgumentException("Name too long!");
+            this.name = name;
             this.clazz = requireNonNull(clazz);
         }
 
         public boolean isRegistered() {
-            return id != Short.MAX_VALUE;
+            return id != UNDEFINED;
         }
 
         private void registerHandler(short id) {
-            if(isRegistered())
-                throw new IllegalStateException();
             this.id = id;
         }
 

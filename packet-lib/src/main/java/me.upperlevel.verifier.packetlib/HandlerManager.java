@@ -2,18 +2,22 @@ package me.upperlevel.verifier.packetlib;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class HandlerManager<S> {
-    public Map<Class<?>, List<Handler<S>>> handlers = new HashMap<>(30);
+    public Map<Class<?>, List<Handler<S, ?>>> handlers = new HashMap<>(30);
     public Logger logger = Logger.getLogger("HandlerManager");
 
-    public void register(Object obj) {
+    @SuppressWarnings("unchecked")
+    public void register(MessageHandlerContainer obj) {
         for(Method method : obj.getClass().getDeclaredMethods()) {
             if(method.isAnnotationPresent(MessageHandler.class)) {
-                Handler<S> handler;
+                Handler handler;
                 int index = 0;
 
                 if(method.getParameterCount() == 1)
@@ -29,6 +33,12 @@ public class HandlerManager<S> {
         }
     }
 
+    public <T> void register(Class<T> clazz, Handler<S, T> handler) {
+        getOrCreate(clazz).add(handler);
+    }
+
+
+
     public int invoke(S sender, Object message) {
         Class<?> type = message.getClass();
         int invoked;
@@ -39,31 +49,33 @@ public class HandlerManager<S> {
         return invoked;
     }
 
-    public int invoke(S sender, Object message, Class<?> type) {
-        List<Handler<S>> found = handlers.get(type);
+    @SuppressWarnings("unchecked")
+    public <T> int invoke(S sender, T message, Class<?> type) {
+        List<Handler<S, T>> found = (List)handlers.get(type);
         if(found == null || found.size() == 0)
             return 0;
-        for(Handler<S> handler : found)
+        for(Handler<S, T> handler : found)
             try {
                 handler.handle(sender, message);
-            } catch (InvocationTargetException | IllegalAccessException e) {
+            } catch (Exception e) {
                 logger.log(Level.SEVERE, "Error while invoking message", e);
             }
         return found.size();
     }
 
-    private List<Handler<S>> getOrCreate(Class<?> clazz) {
-        List<Handler<S>> res = handlers.computeIfAbsent(clazz, k -> new ArrayList<>());
+    @SuppressWarnings("unchecked")
+    private <T> List<Handler<S, T>> getOrCreate(Class<T> clazz) {
+        List<Handler<S, T>> res = (List)handlers.computeIfAbsent(clazz, k -> new ArrayList<>());
         if(res == null)
             throw new IllegalStateException("computeIfAbsent is not working!");
         return res;
     }
 
-    private interface Handler<S> {
-        public void handle(S server, Object message) throws InvocationTargetException, IllegalAccessException;
+    public interface Handler<S, T> {
+        public void handle(S sender, T message) throws Exception;
     }
 
-    private static class ClassHandler<S> implements Handler<S> {
+    private static class ClassHandler<S> implements Handler<S, Object> {
         private final Method method;
         private final Object instance;
 
@@ -73,12 +85,12 @@ public class HandlerManager<S> {
         }
 
         @Override
-        public void handle(S server, Object message) throws InvocationTargetException, IllegalAccessException {
+        public void handle(S sender, Object message) throws InvocationTargetException, IllegalAccessException {
             method.invoke(instance, message);
         }
     }
 
-    private static class SenderClassHandler<S> implements Handler<S> {
+    private static class SenderClassHandler<S> implements Handler<S, Object> {
         private final Method method;
         private final Object instance;
 
@@ -88,8 +100,8 @@ public class HandlerManager<S> {
         }
 
         @Override
-        public void handle(S server, Object message) throws InvocationTargetException, IllegalAccessException {
-            method.invoke(instance, server, message);
+        public void handle(S sender, Object message) throws InvocationTargetException, IllegalAccessException {
+            method.invoke(instance, sender, message);
         }
     }
 }

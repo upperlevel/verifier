@@ -11,6 +11,8 @@ import me.upperlevel.verifier.packetlib.Connection;
 import me.upperlevel.verifier.packetlib.PacketManager;
 import me.upperlevel.verifier.packetlib.ServerConnectionInitializer;
 
+import java.nio.charset.StandardCharsets;
+
 public class Client {
     private final int port;
     private final String host;
@@ -20,7 +22,7 @@ public class Client {
     public Client(int port, String host) {
         this.port = port;
         this.host = host;
-        Thread.currentThread().setName("Verifier - Server");
+        Thread.currentThread().setName("Verifier - Client");
         packetManager.addListener(new ClientListener());
     }
 
@@ -35,7 +37,9 @@ public class Client {
         try {
             Bootstrap bootstrap = new Bootstrap().group(group)
                     .channel(NioSocketChannel.class)
-                    .handler(new ServerConnectionInitializer<>(this::onConnect, packetManager));
+                    .handler(new ServerConnectionInitializer<>(this::onConnect, packetManager, false));
+
+            registerDefHandlers();
 
             Channel channel = bootstrap.connect(host, port).sync().channel();
 
@@ -46,6 +50,10 @@ public class Client {
         } finally {
             group.shutdownGracefully();
         }
+    }
+
+    private void registerDefHandlers() {
+        packetManager.register("str", String.class, (String in) -> toString().getBytes(StandardCharsets.UTF_8), (byte[] in) -> new String(in, StandardCharsets.UTF_8));
     }
 
     public ServerHandler onConnect(Connection connection) {
