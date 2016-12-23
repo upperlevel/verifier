@@ -8,7 +8,7 @@
     <version>1.0-SNAPSHOT</version>
 
     <parent>
-        <groupId>me.upperlevel</groupId>
+        <groupId>me.upperlevel.verifier</groupId>
         <artifactId>verifier-parent</artifactId>
         <version>FINAL</version>
     </parent>
@@ -20,7 +20,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>me.upperlevel</groupId>
+            <groupId>me.upperlevel.verifier</groupId>
             <artifactId>packetlib</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
