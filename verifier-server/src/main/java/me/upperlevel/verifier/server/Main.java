@@ -1,7 +1,7 @@
-package me.upperlevel.verifier;
+package me.upperlevel.verifier.server;
 
 import lombok.Getter;
-import me.upperlevel.verifier.conn.Client;
+import me.upperlevel.verifier.server.conn.Server;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -14,16 +14,17 @@ import java.util.logging.Logger;
 public class Main {
     private static Logger logger = Logger.getLogger("Main");
     @Getter
-    private static Client client;
+    private static Server server;
 
     public static void main(String... args) {
         removeCryptographyRestrictions();
-        client = new Client("localhost");
+        server = new Server();
         try {
-            client.start();
+            server.start();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+
     }
 
 

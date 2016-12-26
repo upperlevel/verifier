@@ -1,215 +1,236 @@
 package me.upperlevel.verifier.packetlib;
 
-import me.upperlevel.verifier.packetlib.defs.HandshakePacket;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToMessageDecoder;
+import io.netty.handler.codec.MessageToMessageEncoder;
+import lombok.Getter;
+import me.upperlevel.verifier.packetlib.collections.IdList;
+import me.upperlevel.verifier.packetlib.exceptions.NotEnoughIdsException;
+import me.upperlevel.verifier.packetlib.proto.HandshakePacket;
 
-import java.io.ByteArrayOutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
-import static java.util.Objects.requireNonNull;
+public class PacketManager {
+    public final int minId;
+    public final int maxId;
 
-/**
- *
- * @param <S> The sender type (who sends the message)
- */
-public class PacketManager<S> {
-    private final short MIN_VALUE = Short.MIN_VALUE;
-    private short nextID = Short.MIN_VALUE;
+    public final long maxPackets;
 
-    public PacketHandler<?>[] packets = new PacketHandler[Short.MAX_VALUE - Short.MIN_VALUE];
+    private int nextId;
 
-    public Map<Class<?>, PacketHandler<?>> class_mapped = new HashMap<>();
 
-    private final MessageListenerManager<S> messageListenerManager;
+    public final Map<String, PacketHandler<?>> handlers = new HashMap<>();
+    public final Map<Class<?>, PacketHandler<?>> class_mapped = new HashMap<>();
+    public List<PacketHandler<?>> id_mapped = new IdList<>(1024);
 
-    public PacketManager(Class<S> senderType) {
-        messageListenerManager = new MessageListenerManager<>(senderType);
-        setupDefs();
-    }
+    public final MessageToMessageEncoder<Object> encoder = createEncoder();
+    public final MessageToMessageDecoder<AnyPacket> decoder = createDecoder();
+    public final SimpleChannelInitializer initializer;
 
-    private void setupDefs() {
+    @Getter
+    private final SimpleConnectionOptions options;
+    @Getter
+    private SideType sideType;
+
+    public PacketManager(SideType type, SimpleConnectionOptions options) {
+        PacketTypeLength length = options.getTypeBytes();
+        minId = length.min;
+        maxId = length.max;
+        maxPackets = length.length;
+        nextId = minId;
+
+        this.sideType = type;
+        this.options = options;
+
+        this.initializer = new SimpleChannelInitializer(this);
         register(HandshakePacket.HANDLER);
     }
 
-
-    public PacketHandler<?> getId(short id) {
-        return packets[id - MIN_VALUE];
+    public PacketManager(SideType type) {
+        this(type, SimpleConnectionOptions.DEFAULT);
     }
 
-    public void setId(short id, PacketHandler<?> packet){
-        packets[id - MIN_VALUE] = packet;
+
+    protected void map(PacketHandler<?> in) {
+        in.setId(nextId++);
+
+        class_mapped.put(in.getHandled(), in);
+        id_mapped.set(in.getId() - minId, in);
     }
 
-    public <T> void register(String name, Class<T> clazz, Function<T, byte[]> encoder, Function<byte[], T> decoder) {
-        register(new SimpleHandler<>(name, clazz, encoder, decoder));
+    public boolean register(PacketHandler<?> handler) {
+        checkIdRange();
+        if(handlers.putIfAbsent(handler.getName(), handler) == null) {
+            map(handler);
+            return true;
+        } else return false;
     }
 
-    public void register(PacketHandler<?> handler) {
-        setId(nextID, handler);
-        handler.registerHandler(nextID);
-        nextID++;
-        class_mapped.put(handler.getClazz(), handler);
+    public <P> boolean register(String name, Class<P> clazz, Function<byte[], P> encoder, Function<P, byte[]> decoder) {
+        return register( PacketHandler.from(name, clazz, encoder, decoder));
     }
 
-    public byte[] encodeAll() {
-        ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
-        for (short id = 0; id < packets.length; id++) {
-            out.write(id);
-            try {
-                out.write(packets[id].getName().getBytes(StandardCharsets.UTF_8));
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+    public PacketHandler<?> get(String name) {
+        return handlers.get(name);
+    }
+
+    public PacketHandler<?> getOrDefault(String name, PacketHandler<?> def) {
+        return handlers.getOrDefault(name, def);
+    }
+
+    private void checkIdRange() {
+        if(nextId > maxId)
+            throw new NotEnoughIdsException();
+    }
+
+    public void onHandshake(HandshakePacket handshake) {
+        List<String> pkts = handshake.getPackets();
+
+        if(pkts.size() != handlers.size() - 1)
+            throw new IllegalStateException("The server packets are different from the clients: (server:" + pkts.size() + ", client:" + (handlers.size() + 1) + ")");
+
+        List<PacketHandler<?>> id_mpd = new IdList<>();
+        id_mpd.set(0, HandshakePacket.HANDLER);
+        final int size = pkts.size();
+        for (int i = 0; i < size; i++) {
+            String str = pkts.get(i);
+            PacketHandler<?> handler = handlers.get(str);
+            if(handler == null)
+                throw new IllegalStateException("This client doesn't have the packet: \"" + str + "\"");
+            handler.setId(i + 1);
+            id_mpd.set(handler.getId(), handler);
+        }
+
+        this.id_mapped = id_mpd;
+    }
+
+    public HandshakePacket createHandshake() {
+        return new HandshakePacket(new ArrayList<>(handlers.keySet()).subList(1, handlers.size()));
+    }
+
+    public boolean isServer() {
+        return sideType == SideType.SERVER;
+    }
+
+    public boolean isClient() {
+        return sideType == SideType.CLIENT;
+    }
+
+    public MessageToMessageDecoder<AnyPacket> createDecoder() {
+        return new PacketDecoder();
+    }
+
+    public MessageToMessageEncoder<Object> createEncoder() {
+        return new PacketEncoder();
+    }
+
+    public enum PacketTypeLength {
+        BYTE(1) {
+            @Override public int toInt(byte[] in) {
+                return in[0];
             }
-            out.write((byte) '\0');
+
+            @Override public byte[] toByteArray(int in) {
+                return new byte[]{
+                        (byte) in
+                };
+            }
+        },
+        SHORT(2) {
+            @Override public int toInt(byte[] in) {
+                return ByteBuffer.wrap(in).getShort();
+            }
+
+            @Override public byte[] toByteArray(int in) {
+                return new byte[]{
+                        (byte) (in >> 8),
+                        (byte) in
+                };
+            }
+        },
+        INT(4) {
+            @Override public int toInt(byte[] in) {
+                return ByteBuffer.wrap(in).getInt();
+            }
+
+            @Override public byte[] toByteArray(int in) {
+                return new byte[]{
+                        (byte) (in >> 24),
+                        (byte) (in >> 16),
+                        (byte) (in >> 8),
+                        (byte) in
+                };
+            }
+        };
+
+        public final int bytes;
+        public final int min, max;
+        public final long length;
+
+        PacketTypeLength(int bytes) {
+            this.bytes = bytes;
+            min = min(bytes);
+            max = max(bytes);
+            length = (((long) min) - max) + 1L;
         }
-        return out.toByteArray();
+
+        public static int max(int bits) {
+            return (int) Math.pow(2, bits * 8 - 1) - 1;
+        }
+
+        public static int min(int bits) {
+            return (int) -Math.pow(2, bits * 8 - 1);
+        }
+
+        public static PacketTypeLength getFromBytes(int bytes) {
+            switch (bytes) {
+                case 1:
+                    return BYTE;
+                case 2:
+                    return SHORT;
+                case 4:
+                    return INT;
+                default:
+                    return null;
+            }
+        }
+
+        public abstract int toInt(byte[] in);
+
+        public abstract byte[] toByteArray(int in);
     }
 
 
-    /**
-     * @see MessageListenerManager#addListener(Object)
-     */
-    public void addListener(Object listener) {
-        messageListenerManager.addListener(listener);
-    }
-
-    /**
-     * @see MessageListenerManager#addListener(Class, BiConsumer)
-     */
-    public <T> void addListener(Class<T> type, BiConsumer<S, T> consumer) {
-        messageListenerManager.addListener(type, consumer);
-    }
-
-    /**
-     * @see MessageListenerManager#addListener(Class, Consumer)
-     */
-    public <T> void addListener(Class<T> type, Consumer<T> consumer) {
-        messageListenerManager.addListener(type, consumer);
-    }
-
-    /**
-     * @see MessageListenerManager#call(S, Object)
-     */
-    public void onMessageReceive(S sender, Object msg) {
-        messageListenerManager.call(sender, msg);
-    }
-
-
-    public PacketHandler<?> getHandler(Object msg) {
-        Class<?> clazz = msg.getClass();
-        return class_mapped.get(clazz);
-    }
-
-    public PacketHandler<?> getHandler(int id) {
-        return getId((short) id);
-    }
-
-    public PacketHandler<?> getHandler(Class<?> clazz) {
-        return class_mapped.get(clazz);
-    }
-
-    public PacketHandler<?> getHandlerContinued(Class<?> clazz) {
-        PacketHandler<?> handler = getHandler(clazz);
-        return handler == null && clazz.getSuperclass() != null ? getHandlerContinued(clazz.getSuperclass()) : handler;
-    }
-
-    public HandshakePacket getHandshake() {
-        List<String> packets_name = new ArrayList<>(nextID - Short.MIN_VALUE);
-
-        final int max = nextID - MIN_VALUE;
-        for(short i = 0; i < max; i++)
-            packets_name.add(packets[i].getName());
-
-        return new HandshakePacket(packets_name);
-    }
-
-    public void setHandshake(HandshakePacket packet) {
-        PacketHandler<?>[] new_packets = new PacketHandler[packets.length];
-        String[] names = packet.packets;
-        for (int i = 0; i < names.length; i++) {
-            new_packets[i] = getFromName(names[i]);
-            if(new_packets[i] == null)
-                System.err.println("WARNING! packet not registered!");
+    protected final class PacketEncoder extends MessageToMessageEncoder<Object> {
+        @Override
+        @SuppressWarnings("unchecked")
+        protected void encode(ChannelHandlerContext channelHandlerContext, Object in, List<Object> out) throws Exception {
+            PacketHandler<?> handler = class_mapped.get(in.getClass());
+            if(handler != null)
+                out.add(new AnyPacket(handler.getId(), ((PacketHandler)handler).encode(in)));
             else
-                new_packets[i].registerHandler((short) (i + MIN_VALUE));
-        }
-        packets = new_packets;
-    }
-
-    private PacketHandler<?> getFromName(String name) {
-        Objects.requireNonNull(name);
-        final int max = nextID - MIN_VALUE;
-        for (int i = 0; i < max; i++) {
-            if(name.equals(packets[i].name))
-                return packets[i];
-        }
-        return null;
-    }
-
-    public static abstract class PacketHandler<T> {
-        public static final int UNDEFINED = Integer.MAX_VALUE;
-        public final String name;
-        public final Class<T> clazz;
-        private int id = UNDEFINED;
-
-        public PacketHandler(String name, Class<T> clazz) {
-            if(name == null)
-                throw new IllegalArgumentException("The argument name is null!");
-            else if(name.length() > 128)
-                throw new IllegalArgumentException("Name too long!");
-            this.name = name;
-            this.clazz = requireNonNull(clazz);
-        }
-
-        public boolean isRegistered() {
-            return id != UNDEFINED;
-        }
-
-        private void registerHandler(short id) {
-            this.id = id;
-        }
-
-        public short getId() {
-            if(isRegistered())
-                throw new IllegalStateException();
-            return (short)id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public abstract byte[] encode(T decoded);
-
-        public abstract T decode(byte[] encoded);
-
-        public Class<T> getClazz() {
-            return clazz;
+                System.out.println("WARN: PacketEncoder-> unknown packet received (class:" + in.getClass().getName() + "):" + class_mapped.keySet());
         }
     }
 
-    private static class SimpleHandler<T> extends PacketHandler<T> {
-        private final Function<T, byte[]> encoder;
-        private final Function<byte[], T> decoder;
-
-
-        public SimpleHandler(String name, Class<T> clazz, Function<T, byte[]> encoder, Function<byte[], T> decoder) {
-            super(name, clazz);
-            this.encoder = requireNonNull(encoder);
-            this.decoder = requireNonNull(decoder);
-        }
-
+    protected final class PacketDecoder extends MessageToMessageDecoder<AnyPacket> {
         @Override
-        public byte[] encode(T decoded) {
-            return encoder.apply(decoded);
+        @SuppressWarnings("unchecked")
+        protected void decode(ChannelHandlerContext channelHandlerContext, AnyPacket in, List<Object> out) throws Exception {
+            PacketHandler<?> handler = id_mapped.get(in.getType() - minId);
+            if(handler != null)
+                out.add(handler.decode(in.getData()));
+            else
+                System.out.println("WARN: PacketDecoder-> unknown packet received: (id:" + in.getType() + ")");
         }
+    }
 
-        @Override
-        public T decode(byte[] encoded) {
-            return decoder.apply(encoded);
-        }
+    public enum SideType {
+        CLIENT, SERVER;
     }
 }

@@ -1,4 +1,4 @@
-package me.upperlevel.verifier.conn;
+package me.upperlevel.verifier.client.conn;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -6,24 +6,21 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.internal.logging.InternalLoggerFactory;
-import lombok.Getter;
-import me.upperlevel.verifier.packetlib.Connection;
+import me.upperlevel.verifier.client.conn.proto.MessagePacket;
 import me.upperlevel.verifier.packetlib.PacketManager;
-import me.upperlevel.verifier.packetlib.ServerConnectionInitializer;
 
-import java.nio.charset.StandardCharsets;
+import java.util.Scanner;
 
 public class Client {
     private final int port;
     private final String host;
-    @Getter
-    private PacketManager<ServerHandler> packetManager = new PacketManager<>(ServerHandler.class);
+
+    private final PacketManager manager = new PacketManager(PacketManager.SideType.CLIENT);
 
     public Client(int port, String host) {
         this.port = port;
         this.host = host;
         Thread.currentThread().setName("Verifier - Client");
-        packetManager.addListener(new ClientListener());
     }
 
     public Client(String host) {
@@ -35,16 +32,16 @@ public class Client {
         EventLoopGroup group = new NioEventLoopGroup();
 
         try {
-            Bootstrap bootstrap = new Bootstrap().group(group)
+            Bootstrap bootstrap = new Bootstrap()
+                    .group(group)
                     .channel(NioSocketChannel.class)
-                    .handler(new ServerConnectionInitializer<>(this::onConnect, packetManager, false));
+                    .handler(new ClientInitializer(manager));
 
-            registerDefHandlers();
+            registerPackets();
 
             Channel channel = bootstrap.connect(host, port).sync().channel();
 
-            channel.write("Hi\n");
-
+            onConnectionStart(channel);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -52,13 +49,18 @@ public class Client {
         }
     }
 
-    private void registerDefHandlers() {
-        packetManager.register("str", String.class, (String in) -> toString().getBytes(StandardCharsets.UTF_8), (byte[] in) -> new String(in, StandardCharsets.UTF_8));
+    private void registerPackets() {
+        manager.register(MessagePacket.HANDLER);
     }
 
-    public ServerHandler onConnect(Connection connection) {
-        ServerHandler handler = new ServerHandler(connection);
-        //pools.addPool(handler);
-        return handler;
+    protected void onConnectionStart(Channel channel) {
+        Scanner in = new Scanner(System.in);
+        while(true) {
+            String line = in.nextLine();
+            channel.writeAndFlush(new MessagePacket(line));
+            System.out.println("Sent");
+            if("bye".equals(line))
+                break;
+        }
     }
 }
