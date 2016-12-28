@@ -63,6 +63,11 @@ public class PacketManager {
         id_mapped.set(in.getId() - minId, in);
     }
 
+    public void register(PacketHandler<?>... handlers) {
+        for(PacketHandler<?> handler : handlers)
+            register(handler);
+    }
+
     public boolean register(PacketHandler<?> handler) {
         checkIdRange();
         if(handlers.putIfAbsent(handler.getName(), handler) == null) {

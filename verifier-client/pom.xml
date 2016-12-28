@@ -21,9 +21,14 @@
     <dependencies>
         <dependency>
             <groupId>me.upperlevel.verifier</groupId>
-            <artifactId>packetlib</artifactId>
+            <artifactId>packet-lib</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>me.upperlevel.verifier</groupId>
+            <artifactId>protocol</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

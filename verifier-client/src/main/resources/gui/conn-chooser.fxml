@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <HBox>
+         <children>
+            <HBox>
+               <children>
+                  <Label text="Host:" />
+                  <TextField fx:id="host_field" />
+               </children>
+            </HBox>
+            <HBox>
+               <children>
+                  <Label text=":" />
+                  <TextField fx:id="port_field" prefHeight="25.0" prefWidth="55.0" />
+               </children>
+            </HBox>
+         </children>
+      </HBox>
+      <ButtonBar prefHeight="40.0" VBox.vgrow="ALWAYS">
+        <buttons>
+          <Button mnemonicParsing="false" onAction="#onExit" text="Exit" ButtonBar.buttonData="LEFT" />
+          <Button mnemonicParsing="false" onAction="#onConnect" text="Connect" ButtonBar.buttonData="RIGHT" />
+        </buttons>
+         <VBox.margin>
+            <Insets left="5.0" right="5.0" />
+         </VBox.margin>
+      </ButtonBar>
+   </children>
+</VBox>

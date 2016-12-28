@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.text.Font?>
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="560.0" prefWidth="871.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <MenuBar>
+        <menus>
+          <Menu mnemonicParsing="false" text="File">
+            <items>
+                  <MenuItem mnemonicParsing="false" onAction="#onSend" text="Send" />
+                  <MenuItem mnemonicParsing="false" onAction="#onOptions" text="Options" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+              <MenuItem mnemonicParsing="false" onAction="#onClose" text="Close" />
+            </items>
+          </Menu>
+            <Menu mnemonicParsing="false" text="Test">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#onRequestTime" text="Request more time" />
+                  <MenuItem mnemonicParsing="false" onAction="#onTestInfo" text="Test info" />
+              </items>
+            </Menu>
+          <Menu mnemonicParsing="false" text="Help">
+            <items>
+                  <MenuItem mnemonicParsing="false" onAction="#onAskHelp" text="Ask Help" />
+              <MenuItem mnemonicParsing="false" onAction="#onAbout" text="About" />
+                  <MenuItem mnemonicParsing="false" onAction="#onBugReport" text="Bug report" />
+            </items>
+          </Menu>
+        </menus>
+      </MenuBar>
+      <SplitPane dividerPositions="0.19907940161104717" prefHeight="160.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+        <items>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="511.0" prefWidth="182.0">
+               <children>
+                  <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <ListView fx:id="exercises" VBox.vgrow="ALWAYS" />
+                        <HBox>
+                           <children>
+                              <Separator HBox.hgrow="ALWAYS" />
+                              <Button mnemonicParsing="false" onAction="#onSend" text="Send" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </AnchorPane>
+          <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="160.0" prefWidth="100.0">
+               <children>
+                  <VBox AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <HBox>
+                           <children>
+                              <HBox>
+                                 <children>
+                                    <Label text="Exercize:">
+                                       <HBox.margin>
+                                          <Insets right="5.0" />
+                                       </HBox.margin>
+                                    </Label>
+                                    <Label fx:id="exercize_number" text="0" />
+                                    <Label text="/" />
+                                    <Label fx:id="exercize_max" text="0" />
+                                 </children>
+                              </HBox>
+                              <HBox>
+                                 <HBox.margin>
+                                    <Insets left="10.0" />
+                                 </HBox.margin>
+                                 <children>
+                                    <Label fx:id="ex_percenrtage" text="0" />
+                                    <Label text="\%" />
+                                 </children>
+                              </HBox>
+                              <Pane HBox.hgrow="ALWAYS" />
+                              <HBox>
+                                 <children>
+                                    <Label fx:id="ex_percenrtage1" text="0h 0m 0s" />
+                                 </children>
+                              </HBox>
+                           </children>
+                        </HBox>
+                        <AnchorPane fx:id="ex_container" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
+                        <HBox VBox.vgrow="ALWAYS">
+                           <children>
+                              <Button mnemonicParsing="false" onAction="#onPrevious" text="Prev" />
+                              <Separator HBox.hgrow="ALWAYS" />
+                              <Button mnemonicParsing="false" onAction="#onNext" text="Next" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children>
+            </AnchorPane>
+        </items>
+      </SplitPane>
+      <HBox id="HBox" fx:id="bottombar" alignment="CENTER_LEFT" spacing="5.0">
+         <children>
+            <Label fx:id="left_status" maxHeight="1.7976931348623157E308" maxWidth="-1.0" text="Left status" HBox.hgrow="ALWAYS">
+               <font>
+                  <Font size="11.0" fx:id="x3" />
+               </font>
+               <textFill>
+                  <Color blue="0.625" green="0.625" red="0.625" fx:id="x4" />
+               </textFill>
+            </Label>
+            <Pane prefHeight="-1.0" prefWidth="-1.0" HBox.hgrow="ALWAYS" />
+            <Label fx:id="right_status" font="$x3" maxWidth="-1.0" text="Right status" textFill="$x4" HBox.hgrow="NEVER" />
+         </children>
+         <padding>
+            <Insets bottom="3.0" left="3.0" right="3.0" top="3.0" />
+         </padding>
+      </HBox>
+   </children>
+</VBox>
