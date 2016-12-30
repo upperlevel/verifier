@@ -2,6 +2,7 @@ package xyz.upperlevel.verifier.packetlib.simple;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -53,20 +54,18 @@ public class SimpleClient {
     public void start() throws InterruptedException {
         group = new NioEventLoopGroup(threadsNumber);
 
-        try {
-            Bootstrap bootstrap = new Bootstrap()
-                    .group(group)
-                    .channel(NioSocketChannel.class)
-                    .handler(new ChannelInitializer<SocketChannel>() {
-                        @Override protected void initChannel(SocketChannel channel) throws Exception {
-                            packetManager.initializer.setup(channel);
-                            channel.pipeline().addLast("handler", executorManager.createCaller());
-                        }
-                    });
-            channel = bootstrap.connect(host, port).sync().channel();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        Bootstrap bootstrap = new Bootstrap()
+                .group(group)
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override protected void initChannel(SocketChannel channel) throws Exception {
+                        packetManager.initializer.setup(channel);
+                        channel.pipeline().addLast("handler", executorManager.createCaller());
+                    }
+                });
+        final ChannelFuture future = bootstrap.connect(host, port);
+        future.await();
+        channel = future.sync().channel();
     }
 
     public <T> SimpleClient manage(Class<T> packetClazz, Consumer<T> callback) {
