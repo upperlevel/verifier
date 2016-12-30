@@ -1,53 +1,40 @@
 package xyz.upperlevel.verifier.client;
 
-import xyz.upperlevel.verifier.proto.ExerciseData;
+import xyz.upperlevel.verifier.exercises.ExerciseType;
+import xyz.upperlevel.verifier.exercises.ExerciseTypeManager;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.stream.Collectors;
 
 public class ExerciseUtil {
     protected static final ExecutorService waiters = Executors.newSingleThreadExecutor();
 
+    protected static Map<String, Consumer<ExerciseType<?>>> listeners = new HashMap<>();
 
-    public boolean register(ExerciseHandler<?> handler) {
-        return exercises.putIfAbsent(handler.type, handler) == null;
+    static {
+        Main.getExerciseManager().registerListener(ExerciseUtil::onExType);
     }
 
-    public boolean remove(ExerciseHandler<?> handler) {
-        return exercises.remove(handler.type) != null;
+
+    protected static void onExType(ExerciseType<?> reg) {
+        Consumer<ExerciseType<?>> listener = listeners.remove(reg.type);
+        if(listener != null)
+            listener.accept(reg);
     }
 
-    public boolean remove(String type) {
-        return exercises.remove(type) != null;
-    }
-
-    public boolean registerOverride(ExerciseHandler<?> handler) {
-        return exercises.put(handler.type, handler) != null;
-    }
-
-    public ExerciseHandler<?> get(String type) {
-        return exercises.get(type);
-    }
-
-    public Future<ExerciseHandler<?>> ask(String type) {
-        ExerciseHandler<?> handler = exercises.get(type);
+    public static Future<ExerciseType<?>> ask(String type) {
+        ExerciseTypeManager manager = Main.getExerciseManager();
+        ExerciseType<?> handler = manager.get(type);
         if(handler != null)
             return CompletableFuture.completedFuture(handler);
         else {
             Main.getConnection().sendExerciseTypeRequest(type);
-            CompletableFuture<ExerciseHandler<?>> res = new CompletableFuture<>();
+            CompletableFuture<ExerciseType<?>> res = new CompletableFuture<>();
+
             listeners.put(type, res::complete);
             return res;
         }
@@ -58,17 +45,18 @@ public class ExerciseUtil {
      * @param types the types that want to be converted
      * @param callback the callback to be executed
      */
-    public void getAllOrWait(List<String> types, Consumer<List<ExerciseHandler<?>>> callback) {
-        ExerciseHandler<?>[] found = new ExerciseHandler[types.size()];
+    public static void getAllOrWait(List<String> types, Consumer<List<ExerciseType<?>>> callback) {
+        ExerciseTypeManager manager = Main.getExerciseManager();
+        ExerciseType<?>[] found = new ExerciseType[types.size()];
         int index = 0;
 
         Iterator<String> iterator = types.iterator();
         while (iterator.hasNext()) {
             final String str = iterator.next();
-            found[index] = get(str);
+            found[index] = manager.get(str);
             if(found[index] == null) {
                 //Sync failure, go async and wait
-                List<Future<ExerciseHandler<?>>> handlers = new ArrayList<>();
+                List<Future<ExerciseType<?>>> handlers = new ArrayList<>();
                 for(int i = 0; i < index; i++)
                     handlers.add(CompletableFuture.completedFuture(found[i]));
                 handlers.add(ask(str));
@@ -81,55 +69,9 @@ public class ExerciseUtil {
         callback.accept(Arrays.asList(found));
     }
 
-    public void register(String exName, byte[] data) {
-        try {
-            for(ExerciseHandler<?> handler : load(save(new File(EX_FOLDER, exName + ".jar"), data).getPath())) {
-                Consumer<ExerciseHandler<?>> fut = listeners.remove(handler.type);
-                fut.accept(handler);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Main.getUI().error(e);
-        }
-    }
-
-    private List<ExerciseHandler<?>> load(String pathToJar) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
-        JarFile jarFile = new JarFile(pathToJar);
-        Enumeration<JarEntry> e = jarFile.entries();
-        List<ExerciseHandler<?>> res = new ArrayList<>();
-
-        URL[] urls = {new URL("jar:file:" + pathToJar + "!/")};
-        URLClassLoader cl = URLClassLoader.newInstance(urls);
-
-        while (e.hasMoreElements()) {
-            JarEntry je = e.nextElement();
-            if (je.isDirectory() || !je.getName().endsWith(".class")) {
-                continue;
-            }
-            // -6 because of .class
-            String className = je.getName().substring(0, je.getName().length() - 6);
-            className = className.replace('/', '.');
-            Class c = cl.loadClass(className);
-            if(ExerciseHandler.class.isAssignableFrom(c)) {
-                ExerciseHandler<?> handler = (ExerciseHandler<?>) c.newInstance();
-                register(handler);
-                res.add(handler);
-            }
-        }
-        return res;
-    }
-
-    private static File save(File file, byte[] data) throws IOException {
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            fos.write(data);
-        }
-        return file;
-    }
-
-
-    public static void waitAll(List<Future<ExerciseHandler<?>>> handlers, Consumer<List<ExerciseHandler<?>>> callback) {
+    public static void waitAll(List<Future<ExerciseType<?>>> handlers, Consumer<List<ExerciseType<?>>> callback) {
         ExerciseWaiter waiter = new ExerciseWaiter(handlers, callback);
-        for(Future<ExerciseHandler<?>> f : handlers)
+        for(Future<ExerciseType<?>> f : handlers)
             if(!f.isDone()) {
                 waiter.async();
                 return;
@@ -137,16 +79,12 @@ public class ExerciseUtil {
         waiter.sync();
     }
 
-    public List<ExerciseData> ancodeAll(List<Exercise> exercises) {
-        return exercises.stream().map(Exercise::getData).collect(Collectors.toList());
-    }
-
     public static class ExerciseWaiter {
 
-        private final List<Future<ExerciseHandler<?>>> handlers;
-        private final Consumer<List<ExerciseHandler<?>>> callback;
+        private final List<Future<ExerciseType<?>>> handlers;
+        private final Consumer<List<ExerciseType<?>>> callback;
 
-        public ExerciseWaiter(List<Future<ExerciseHandler<?>>> handlers, Consumer<List<ExerciseHandler<?>>> callback) {
+        public ExerciseWaiter(List<Future<ExerciseType<?>>> handlers, Consumer<List<ExerciseType<?>>> callback) {
             this.handlers = handlers;
             this.callback = callback;
         }
@@ -156,9 +94,9 @@ public class ExerciseUtil {
         }
 
         public void sync() {
-            ExerciseHandler<?>[] res = new ExerciseHandler[handlers.size()];
+            ExerciseType<?>[] res = new ExerciseType[handlers.size()];
             int i = 0;
-            for (Future<ExerciseHandler<?>> handler : handlers)
+            for (Future<ExerciseType<?>> handler : handlers)
                 try {
                     res[i++] = handler.get();
                 } catch (Exception e) {

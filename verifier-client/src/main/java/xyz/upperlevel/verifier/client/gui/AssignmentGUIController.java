@@ -13,6 +13,7 @@ import javafx.util.Callback;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import xyz.upperlevel.verifier.client.Assignment;
 import xyz.upperlevel.verifier.client.Main;
+import xyz.upperlevel.verifier.exercises.Exercise;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -170,7 +171,7 @@ public class AssignmentGUIController implements Initializable {
         ((SimpleGUI)Main.getUI()).onWinLoad.run();
     }
 
-    private static class CustomCellFactory implements Callback<ListView<Exer>, ListCell<Exercise>> {
+    private static class CustomCellFactory implements Callback<ListView<Exercise>, ListCell<Exercise>> {
         @Override public ListCell<Exercise> call(ListView<Exercise> param) {
             return new ListCell<Exercise>() {
 

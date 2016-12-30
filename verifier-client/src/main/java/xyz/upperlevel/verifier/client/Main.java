@@ -4,18 +4,19 @@ import xyz.upperlevel.verifier.client.conn.Connection;
 import xyz.upperlevel.verifier.client.conn.ConnectionHandler;
 import xyz.upperlevel.verifier.client.gui.SimpleGUI;
 import xyz.upperlevel.verifier.client.gui.UI;
+import xyz.upperlevel.verifier.exercises.Exercise;
+import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.exercises.ExerciseTypeManager;
 import xyz.upperlevel.verifier.proto.ErrorType;
 import xyz.upperlevel.verifier.proto.ExerciseData;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Main implements PacketListener{
-    private static Logger logger = Logger.getLogger("Main");
 
     private static final Main instance = new Main();
 
@@ -24,9 +25,6 @@ public class Main implements PacketListener{
     private final ExerciseTypeManager exerciseManager = new ExerciseTypeManager();
 
     private State state = State.INIT;
-
-    private String assignmentId;
-
 
     public static void main(String... args) {
         instance.start();
@@ -78,7 +76,12 @@ public class Main implements PacketListener{
 
     @Override
     public void onExerciseType(String exName, byte[] data) {
-        exerciseManager.register(exName, data);
+        try {
+            exerciseManager.register(exName, data);
+        } catch (IOException | IllegalAccessException | ClassNotFoundException | InstantiationException e) {
+            e.printStackTrace();
+            ui.error(e);
+        }
     }
 
     @Override
@@ -88,18 +91,18 @@ public class Main implements PacketListener{
 
     private void parseAssignment(String id, List<ExerciseData> exercises, Consumer<Assignment> callback) {
         state = State.ASSIGNMENT_WAIT;
-        exerciseManager.getAllOrWait(
+        ExerciseUtil.getAllOrWait(
                 exercises.stream()
                         .map(ExerciseData::getType)
                         .collect(Collectors.toList()),
-                (List<ExerciseHandler<?>> handlers) -> {
+                (List<ExerciseType<?>> handlers) -> {
                     if (exercises.size() != handlers.size())
                         throw new RuntimeException("The handlers returned arent paired with the exercises!");
                     Assignment assignment = new Assignment(
                             id,
                             IntStream
                                     .range(0, exercises.size())
-                                    .mapToObj(i -> handlers.get(i).decode(exercises.get(i).getData()))
+                                    .mapToObj(i -> handlers.get(i).decodeRequest(exercises.get(i).getData()))
                                     .collect(Collectors.toList())
                     );
                     state = State.ASSIGNMENT_EXECUTING;
@@ -109,7 +112,12 @@ public class Main implements PacketListener{
     }
 
     public static void onSendAssignment(Assignment assignment) {
-        instance.conn.sendAssignment(assignment.getId(), instance.exerciseManager.ancodeAll(assignment.getExercises()));
+        instance.conn.sendAssignment(
+                assignment.getId(),
+                assignment.getExercises().stream()
+                        .map(Exercise::encodeResponse)
+                        .collect(Collectors.toList())
+        );
     }
 
     @Override
@@ -127,7 +135,7 @@ public class Main implements PacketListener{
         return instance.ui;
     }
 
-    public static ExerciseUtil getExerciseManager() {
+    public static ExerciseTypeManager getExerciseManager() {
         return instance.exerciseManager;
     }
 
