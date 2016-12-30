@@ -2,7 +2,6 @@ package xyz.upperlevel.verifier.server;
 
 import io.netty.channel.Channel;
 import lombok.Getter;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.proto.*;
 import xyz.upperlevel.verifier.server.assignments.Assignment;
@@ -103,7 +102,7 @@ public class ClientHandler {
         if(current != null)
             send(Main.currentAssignment().getPacket());
         else
-            throw new NotImplementedException();
+            Main.getAssignmentManager().addListener(ass -> send(ass.getPacket()));
     }
 
     private boolean checkLogged() {

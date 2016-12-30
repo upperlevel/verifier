@@ -10,11 +10,16 @@ import xyz.upperlevel.verifier.server.login.AuthData;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class AssignmentManager {
     public static final File FOLDER = new File("assignments");
 
     private String save_path = "{class}/{user}/{id}".replace("/", File.separator);
+
+    private final List<Consumer<Assignment>> listeners = new ArrayList<>();
 
     @Getter
     private Assignment current = null;
@@ -27,13 +32,19 @@ public class AssignmentManager {
     }
 
     public void terminate() {
-        current = null;
+        synchronized (listeners) {
+            current = null;
+        }
     }
 
     public void load(File file) throws FileNotFoundException {
         if(current != null)
             throw new IllegalStateException("Assignment already hosted!");
-        current = new Assignment(AssignmentConverter.$.load(file), file.getName().replaceFirst("[.][^.]+$", ""));
+        synchronized (listeners) {
+            current = new Assignment(AssignmentConverter.$.load(file), file.getName().replaceFirst("[.][^.]+$", ""));
+            listeners.forEach(c -> c.accept(current));
+            listeners.clear();
+        }
     }
 
     public boolean hasCurrentAssignment(AuthData auth) {
@@ -49,6 +60,15 @@ public class AssignmentManager {
         } catch (IOException e) {
             Main.getUi().error(ErrorType.MISC, "Error committing assignmnet: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    public void addListener(Consumer<Assignment> run) {
+        synchronized (listeners) {
+            if(current != null)
+                run.accept(current);
+            else
+                listeners.add(run);
         }
     }
 
