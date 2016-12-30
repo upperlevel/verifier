@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import lombok.Getter;
+import xyz.upperlevel.verifier.exercises.Exercise;
 
 import java.net.URL;
 import java.util.List;
