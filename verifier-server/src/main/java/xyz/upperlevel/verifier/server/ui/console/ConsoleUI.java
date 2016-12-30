@@ -19,7 +19,7 @@ public class ConsoleUI implements UI {
 
     public final CommandHandler commandHandler = new CommandHandler().registerPackageRelative("commands");
 
-    @Parameter(names = {"-p", "--port"}, validateWith = PortValidator.class, required = true)
+    @Parameter(names = {"-p", "--port"}, validateWith = PortValidator.class)
     private int port = -1;
 
     @Parameter(names = {"-b", "-bossThreadNumber"}, description = "the number of threads to assign at the boss thread group")
@@ -41,6 +41,7 @@ public class ConsoleUI implements UI {
         while (!checkPort(port)) {
             System.out.print("port:");
             port = in.nextInt();
+            in.nextLine();
         }
         callback.accept(
                 port,

@@ -37,6 +37,8 @@ public class Main {
 
 
     public static void main(String... args) {
+        ui.init(args);
+
         loginManager.registerFromFiles();
         ui.askConnInfo((port, options) -> {
             server = new SimpleServer(port, options);
