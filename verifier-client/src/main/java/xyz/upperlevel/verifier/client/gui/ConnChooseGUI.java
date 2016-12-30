@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.TextField;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import xyz.upperlevel.verifier.client.Main;
 
 import java.io.IOException;
 import java.net.URL;
@@ -64,6 +65,7 @@ public class ConnChooseGUI implements Initializable{
         }
         stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setOnCloseRequest(event -> Main.shutdown());
         //stage.initStyle(StageStyle.UNDECORATED);
         stage.initOwner(AssignmentGUI.getInstance().getStage().getOwner());
         stage.setAlwaysOnTop(true);

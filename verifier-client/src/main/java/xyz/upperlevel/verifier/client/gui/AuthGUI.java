@@ -9,6 +9,7 @@ import javafx.scene.control.TextField;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import xyz.upperlevel.verifier.client.AuthToken;
+import xyz.upperlevel.verifier.client.Main;
 
 import java.io.IOException;
 import java.net.URL;
@@ -65,6 +66,7 @@ public class AuthGUI {
             throw new RuntimeException("Cannot load The connection chooser fxml (" + FXML_PATH + ")", e);
         }
         stage = new Stage();
+        stage.setOnCloseRequest(event -> Main.shutdown());
         stage.initModality(Modality.APPLICATION_MODAL);
         //stage.initStyle(StageStyle.UNDECORATED);
         stage.initOwner(AssignmentGUI.getInstance().getStage().getOwner());

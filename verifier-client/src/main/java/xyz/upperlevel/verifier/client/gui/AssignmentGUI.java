@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import lombok.Getter;
 import xyz.upperlevel.verifier.client.Assignment;
+import xyz.upperlevel.verifier.client.Main;
 
 import java.net.URL;
 
@@ -63,6 +64,7 @@ public class AssignmentGUI extends Application {
         loader.setController(this.controller = new AssignmentGUIController());
         Parent root = loader.load(fxml.openStream());
         scene = new Scene(root);
+        stage.setOnCloseRequest(event -> Main.shutdown());
         stage.setScene(scene);
         stage.setTitle(TITLE);
     }

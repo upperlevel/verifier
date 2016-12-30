@@ -111,19 +111,16 @@ public class PacketManager {
         }
 
         this.id_mapped = id_mpd;
-
-        System.out.println("Received handshake packet");
+        /*System.out.println("Received handshake packet");
         for(PacketHandler<?> pkt : id_mpd)
-            System.out.println(">" + pkt.getId() + "->\"" + pkt.getName() + "\"");
+            System.out.println(">" + pkt.getId() + "->\"" + pkt.getName() + "\"");*/
     }
 
     public HandshakePacket createHandshake() {
-        System.out.println("Creating handshake packet");
+        /*System.out.println("Creating handshake packet");
         for(PacketHandler<?> pkt : id_mapped)
-            System.out.println(">" + pkt.getId() + "->\"" + pkt.getName() + "\"");
+            System.out.println(">" + pkt.getId() + "->\"" + pkt.getName() + "\"");*/
         HandshakePacket handshake = HandshakePacket.fromHandlers(id_mapped.subList(1, id_mapped.size()));
-        for(String pkt : handshake.getPackets())
-            System.out.println(">" + pkt+ "\"");
         return handshake;
     }
 

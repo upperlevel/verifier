@@ -38,7 +38,8 @@ public class ConnectionHandler implements Connection {
 
     @Override
     public void shutdown() {
-        client.shutdown();
+        if(client != null)
+            client.shutdown();
     }
 
     @Override

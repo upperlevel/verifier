@@ -1,5 +1,6 @@
 package xyz.upperlevel.verifier.client;
 
+import javafx.application.Platform;
 import xyz.upperlevel.verifier.client.conn.Connection;
 import xyz.upperlevel.verifier.client.conn.ConnectionHandler;
 import xyz.upperlevel.verifier.client.gui.SimpleGUI;
@@ -44,6 +45,10 @@ public class Main implements PacketListener{
         state = State.LOGIN_IN;
         System.out.println("Requesting login");
         ui.requestLogin(auth ->{
+            if(auth == null) {
+                shutdown();
+                return;
+            }
             System.out.println("Sending login");
             conn.sendLogin(auth.getClazz(), auth.getUsername(), auth.getPassword().toCharArray());
             System.out.println("Login sent, waiting for assignment");
@@ -58,8 +63,10 @@ public class Main implements PacketListener{
         System.out.println("Requesting address");
         ui.requestAddress(
                 (host, port) -> {
-                    if(host == null && port == null)
-                        System.exit(0);
+                    if(host == null && port == null) {
+                        shutdown();
+                        return;
+                    }
                     try {
                         state = State.CONNECTING;
                         conn.init(host, port);
@@ -110,6 +117,15 @@ public class Main implements PacketListener{
                     callback.accept(assignment);
                 }
         );
+    }
+
+    public static void shutdown() {
+        System.out.println("---------SHUTDOWN---------");
+        System.out.println("IO threads shutdown....");
+        getConnection().shutdown();
+        System.out.println("JavaFX process shutdown...");
+        Platform.exit();
+        System.out.println("Shutdown completed");
     }
 
     public static void onSendAssignment(Assignment assignment) {

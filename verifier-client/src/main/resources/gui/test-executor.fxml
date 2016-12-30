@@ -58,7 +58,7 @@
                            <children>
                               <HBox>
                                  <children>
-                                    <Label text="Exercize:">
+                                    <Label text="Exercise:">
                                        <HBox.margin>
                                           <Insets right="5.0" />
                                        </HBox.margin>
