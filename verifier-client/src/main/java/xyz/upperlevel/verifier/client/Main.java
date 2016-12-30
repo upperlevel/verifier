@@ -86,6 +86,7 @@ public class Main implements PacketListener{
 
     @Override
     public void onAsignment(String id, List<ExerciseData> exercises) {
+        System.out.println("Received assignment data, parsing");
         parseAssignment(id, exercises, ui::openAssignment);
     }
 
@@ -97,7 +98,7 @@ public class Main implements PacketListener{
                         .collect(Collectors.toList()),
                 (List<ExerciseType<?>> handlers) -> {
                     if (exercises.size() != handlers.size())
-                        throw new RuntimeException("The handlers returned arent paired with the exercises!");
+                        throw new RuntimeException("The handlers returned aren't paired with the exercises!");
                     Assignment assignment = new Assignment(
                             id,
                             IntStream

@@ -15,6 +15,7 @@ public class YamlAssignmentConverter implements AssignmentConverter {
     }
 
     @Override public void save(File file, Map<String, Object> data) throws IOException {
+        file.getParentFile().mkdirs();
         yaml.dump(data, new FileWriter(file));
     }
 }

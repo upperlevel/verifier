@@ -63,9 +63,9 @@
                                           <Insets right="5.0" />
                                        </HBox.margin>
                                     </Label>
-                                    <Label fx:id="exercize_number" text="0" />
+                                    <Label fx:id="ex_number" text="0" />
                                     <Label text="/" />
-                                    <Label fx:id="exercize_max" text="0" />
+                                    <Label fx:id="ex_max" text="0" />
                                  </children>
                               </HBox>
                               <HBox>
@@ -73,14 +73,14 @@
                                     <Insets left="10.0" />
                                  </HBox.margin>
                                  <children>
-                                    <Label fx:id="ex_percenrtage" text="0" />
+                                    <Label fx:id="ex_percentage" text="0" />
                                     <Label text="\%" />
                                  </children>
                               </HBox>
                               <Pane HBox.hgrow="ALWAYS" />
                               <HBox>
                                  <children>
-                                    <Label fx:id="ex_percenrtage1" text="0h 0m 0s" />
+                                    <Label fx:id="ex_time" text="0h 0m 0s" />
                                  </children>
                               </HBox>
                            </children>

@@ -60,7 +60,7 @@ public class AssignmentManager {
     public String getPath(String clazz, String user, Assignment assignment) {
         return save_path
                 .replace("{class}", clazz)
-                .replace("{user}", user)
+                .replace("{user}", user.replace(" ", "_"))
                 .replace("{id}", assignment.getId());
     }
 }

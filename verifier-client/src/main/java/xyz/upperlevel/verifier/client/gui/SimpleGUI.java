@@ -23,6 +23,7 @@ public class SimpleGUI implements UI {
     @Override
     public void initWindows(Runnable onExe) {
         this.onWinLoad = onExe;
+        Platform.setImplicitExit(false);
         Application.launch(AssignmentGUI.class);
     }
 
@@ -37,7 +38,7 @@ public class SimpleGUI implements UI {
 
     @Override
     public void openAssignment(Assignment assignment) {
-
+        Platform.runLater(() -> AssignmentGUI.getInstance().show(assignment));
     }
 
     @Override
