@@ -22,13 +22,13 @@
          </children>
       </HBox>
       <ButtonBar prefHeight="40.0" VBox.vgrow="ALWAYS">
-        <buttons>
-          <Button mnemonicParsing="false" onAction="#onExit" text="Exit" ButtonBar.buttonData="LEFT" />
-          <Button mnemonicParsing="false" onAction="#onConnect" text="Connect" ButtonBar.buttonData="RIGHT" />
-        </buttons>
-         <VBox.margin>
+          <buttons>
+            <Button mnemonicParsing="false" onAction="#onExit" text="Exit" ButtonBar.buttonData="LEFT" />
+            <Button mnemonicParsing="false" onAction="#onConnect" text="Connect" ButtonBar.buttonData="RIGHT" />
+          </buttons>
+          <VBox.margin>
             <Insets left="5.0" right="5.0" />
-         </VBox.margin>
+          </VBox.margin>
       </ButtonBar>
    </children>
 </VBox>

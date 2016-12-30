@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <VBox prefHeight="75.0" prefWidth="217.0" spacing="5.0">
+         <children>
+            <HBox>
+               <children>
+                  <Label text="class" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="class_field" />
+               </children>
+            </HBox>
+            <HBox>
+               <children>
+                  <Label text="name" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <TextField fx:id="user_field" />
+               </children>
+            </HBox>
+            <HBox>
+               <children>
+                  <Label text="password" />
+                  <Pane HBox.hgrow="ALWAYS" />
+                  <PasswordField fx:id="password_field" />
+               </children>
+            </HBox>
+         </children>
+         <VBox.margin>
+            <Insets />
+         </VBox.margin>
+      </VBox>
+      <ButtonBar prefHeight="40.0" prefWidth="200.0">
+        <buttons>
+            <Button mnemonicParsing="false" onAction="#onExit" text="Exit" ButtonBar.buttonData="LEFT" />
+            <Button mnemonicParsing="false" onAction="#onConfirm" text="Confirm" ButtonBar.buttonData="RIGHT" />
+        </buttons>
+      </ButtonBar>
+   </children>
+   <opaqueInsets>
+      <Insets />
+   </opaqueInsets>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
+</VBox>

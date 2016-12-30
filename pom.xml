@@ -14,6 +14,7 @@
         <module>verifier-server</module>
         <module>verifier-client</module>
         <module>protocol</module>
+        <module>exercises</module>
     </modules>
 
     <properties>
@@ -33,6 +34,12 @@
             <artifactId>lombok</artifactId>
             <version>1.16.12</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.9</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

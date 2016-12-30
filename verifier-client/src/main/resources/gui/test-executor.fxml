@@ -26,9 +26,9 @@
             </Menu>
           <Menu mnemonicParsing="false" text="Help">
             <items>
-                  <MenuItem mnemonicParsing="false" onAction="#onAskHelp" text="Ask Help" />
-              <MenuItem mnemonicParsing="false" onAction="#onAbout" text="About" />
-                  <MenuItem mnemonicParsing="false" onAction="#onBugReport" text="Bug report" />
+                <MenuItem mnemonicParsing="false" onAction="#onAskHelp" text="Ask Help" />
+                <MenuItem mnemonicParsing="false" onAction="#onAbout" text="About" />
+                <MenuItem mnemonicParsing="false" onAction="#onBugReport" text="Bug report" />
             </items>
           </Menu>
         </menus>
@@ -39,7 +39,7 @@
                <children>
                   <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                      <children>
-                        <ListView fx:id="exercises" VBox.vgrow="ALWAYS" />
+                        <ListView fx:id="exercises_view" VBox.vgrow="ALWAYS" />
                         <HBox>
                            <children>
                               <Separator HBox.hgrow="ALWAYS" />
