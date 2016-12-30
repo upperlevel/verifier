@@ -61,17 +61,25 @@ public class SimpleServer {
             channel.channel().closeFuture().sync();
         } finally {
             // Shut down all event loops to terminate all threads.
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully().await();
+            workerGroup.shutdownGracefully().await();
         }
         System.out.println("Server closed");
     }
 
     public void shutdown() {
         System.out.println("Shutting down boss group");
-        bossGroup.shutdownNow();
+        try {
+            bossGroup.shutdownGracefully().await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         System.out.println("Shutting down worker group");
-        workerGroup.shutdownNow();
+        try {
+            workerGroup.shutdownGracefully().await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @AllArgsConstructor
