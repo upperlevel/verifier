@@ -10,10 +10,8 @@ import xyz.upperlevel.verifier.server.login.LoginManager;
 import javax.swing.*;
 import java.io.Console;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static xyz.upperlevel.verifier.packetlib.utils.ByteSecurityUtil.zero;
 
@@ -38,7 +36,7 @@ public class LoginCommand extends NodeCommand {
         @CommandRunner
         public void run() {
             LoginManager manager = Main.getLoginManager();
-            Map<String, Map<String, AuthData>> users = manager.getClasses();
+            Map<String, Map<Set<String>, AuthData>> users = manager.getClasses();
 
             for(String str : users.keySet())
                 System.out.println("-" + str);
@@ -56,7 +54,7 @@ public class LoginCommand extends NodeCommand {
                 manager.getLock().unlockRead(stamp);
             }
 
-            users.sort((a, b) -> a.getUsername().compareToIgnoreCase(b.getUsername()));
+            users.sort(AuthData::compare);
             for(AuthData data : users)
                 System.out.println("-" + data.getUsername());
         }
@@ -70,10 +68,14 @@ public class LoginCommand extends NodeCommand {
         }
 
         @CommandRunner
-        public void run(String clazz, String... userName_raw) {
+        public void run(String clazz, String[] username) {
             LoginManager manager = Main.getLoginManager();
-            String username = String.join(" ", userName_raw).toLowerCase();
-            AuthData data = manager.get(clazz, username);
+            AuthData data = manager.get(
+                    clazz,
+                    Arrays.stream(username)
+                            .map(String::toLowerCase)
+                            .collect(Collectors.toSet())
+            );
             if(data == null) {
                 System.out.println("Cannot find \"" + username + "\" in class \"" + clazz + "\"");
                 return;

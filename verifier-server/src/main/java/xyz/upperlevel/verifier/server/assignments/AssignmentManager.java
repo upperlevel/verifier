@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class AssignmentManager {
@@ -76,10 +77,10 @@ public class AssignmentManager {
         return getPath(data.getClazz(), data.getUsername(), getCurrent());
     }
 
-    public String getPath(String clazz, String user, Assignment assignment) {
+    public String getPath(String clazz, Set<String> user, Assignment assignment) {
         return save_path
                 .replace("{class}", clazz)
-                .replace("{user}", user.replace(" ", "_"))
+                .replace("{user}", String.join("_", user))
                 .replace("{id}", assignment.getId());
     }
 }

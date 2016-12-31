@@ -16,7 +16,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -163,16 +162,7 @@ public class AssignmentCommand extends NodeCommand {
         List<AuthData> users = Main.getLoginManager().getUsers();
         users.stream()
                 .filter(pred)
-                .sorted(AssignmentCommand::classNameSorter)
+                .sorted(AuthData::compare)
                 .forEach(use);
-    }
-
-    public static int classNameSorter(AuthData a, AuthData b) {
-        String c1 = a.getClazz();
-        String c2 = b.getClazz();
-        if(!Objects.equals(c1, c2))
-            return c1.compareToIgnoreCase(c2);
-        else
-            return a.getUsername().compareToIgnoreCase(b.getUsername());
     }
 }

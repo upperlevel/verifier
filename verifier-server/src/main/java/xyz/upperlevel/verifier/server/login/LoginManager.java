@@ -23,7 +23,7 @@
      @Getter
      private StampedLock lock = new StampedLock();
 
-     public Map<String, Map<String, AuthData>> users = new HashMap<>();
+     public Map<String, Map<Set<String>, AuthData>> users = new HashMap<>();
 
      public List<AuthData> nonMapped = new ArrayList<>(2048);
 
@@ -35,10 +35,10 @@
      }
 
 
-     public AuthData get(String clazz_name, String username) {
+     public AuthData get(String clazz_name, Set<String> username) {
          long stamp = lock.readLock();
          try {
-             Map<String, AuthData> clazz = users.get(clazz_name);
+             Map<Set<String>, AuthData> clazz = users.get(clazz_name);
              if (clazz == null)
                  return null;
              return clazz.get(username);
@@ -47,7 +47,7 @@
          }
      }
 
-     public Map<String, Map<String, AuthData>> getClasses() {
+     public Map<String, Map<Set<String>, AuthData>> getClasses() {
          return users;
      }
 
@@ -56,7 +56,7 @@
      }
 
      public Collection<AuthData> getClazz(String clazz_name) {
-         Map<String, AuthData> res = users.get(clazz_name);
+         Map<Set<String>, AuthData> res = users.get(clazz_name);
          return res != null ? res.values() : null;
      }
 
@@ -65,7 +65,7 @@
          clazz = clazz.toLowerCase();
          long stamp = lock.writeLock();
          try {
-             Map<String, AuthData> clzz = users.computeIfAbsent(clazz, (a) -> new HashMap<>());
+             Map<Set<String>, AuthData> clzz = users.computeIfAbsent(clazz, (a) -> new HashMap<>());
              AuthData data = new AuthData(clazz, userame, password);
              return clzz.putIfAbsent(data.getUsername(), data) == null;
          } finally {
@@ -109,14 +109,14 @@
          try {
              backupFiles0(true);
              System.out.println("Init writing");
-             for (Map.Entry<String, Map<String, AuthData>> entry : users.entrySet()) {
+             for (Map.Entry<String, Map<Set<String>, AuthData>> entry : users.entrySet()) {
                  File outFile = new File(FOLDER, entry.getKey() + ".txt");
                  if (!outFile.createNewFile())
                      throw new IllegalStateException("Cannot create file \"" + entry.getKey() + ".txt\"");
                  System.out.println("Init writing to " + outFile.getName());
                  try (FileWriter writer = new FileWriter(outFile)) {
                      for (AuthData data : entry.getValue().values()) {
-                         writer.write(data.getUsername());
+                         writer.write(String.join(" ", data.getUsername()));
                          writer.write(" ");
                          writer.write(data.getPassword());
                          writer.write("\r\n");
@@ -239,7 +239,7 @@
          try(FileReader r = new FileReader(file)) {
              BufferedReader reader = new BufferedReader(r);
              String line;
-             Map<String, AuthData> scholars = new HashMap<>(50);
+             Map<Set<String>, AuthData> scholars = new HashMap<>(50);
              final String clazz = removeExt(file.getName()).toLowerCase();
              while ((line = reader.readLine()) != null) {
                  if ("".equals(line)) continue;

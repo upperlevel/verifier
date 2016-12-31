@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.concurrent.locks.StampedLock;
 
 public class ClientHandler {
@@ -93,7 +94,7 @@ public class ClientHandler {
     }
 
     public void onLogin(LoginPacket packet) {
-        AuthData data = Main.getLoginManager().get(packet.getClazz(), packet.getUser().toLowerCase());
+        AuthData data = Main.getLoginManager().get(packet.getClazz(), new HashSet<>(Arrays.asList(packet.getUser().toLowerCase().split(" "))));
         if (data == null) {
             log("Login error: bad username");
             send(new ErrorPacket(ErrorType.LOGIN_BAD_USER, "Username not found"));

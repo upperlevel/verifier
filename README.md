@@ -9,7 +9,7 @@ This has a lot things to implement before the first version in relased
  - [ ] bug report
  - [ ] exercise randomization (based on user and exercise)
  - [ ] more exercise types
- - [ ] order-free names
+ - [x] order-free names
 
 ## Simple server tutorial
 Even if this has a lot of things that need to be implemented, it's still working, so here's a little tutorial in how to make it work:<br>
