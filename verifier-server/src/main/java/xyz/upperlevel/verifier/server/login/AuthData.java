@@ -2,6 +2,7 @@ package xyz.upperlevel.verifier.server.login;
 
 import lombok.Getter;
 import lombok.Setter;
+import xyz.upperlevel.verifier.server.ClientHandler;
 
 public class AuthData {
 
@@ -14,7 +15,7 @@ public class AuthData {
 
     @Getter
     @Setter
-    private boolean logged = false;
+    private ClientHandler logged = null;
 
     public AuthData(String clazz, String username, char[] password) {
         this.clazz = clazz;
@@ -25,5 +26,9 @@ public class AuthData {
     public void setPassword(char[] password) {
         System.out.println("[WARNING]changed password of \"" + username + "\"!");
         this.password = password;
+    }
+
+    public boolean isLogged() {
+        return logged != null;
     }
 }

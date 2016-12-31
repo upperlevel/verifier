@@ -8,6 +8,7 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -45,6 +46,11 @@ public class AssignmentGUIController implements Initializable {
     public Label left_status;
     @FXML
     public Label right_status;
+
+    @FXML
+    public Button prev_button;
+    @FXML
+    public Button next_button;
 
     private int index = 1;
 
@@ -86,7 +92,7 @@ public class AssignmentGUIController implements Initializable {
         int response = JOptionPane.showOptionDialog(
                 null,
                 "Do you want to revise the answers?",
-                "Ya sure?",
+                "Are you sure?",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.QUESTION_MESSAGE,
                 null,
@@ -173,6 +179,16 @@ public class AssignmentGUIController implements Initializable {
     public void updateIndex() {
         ex_number.setText("" + index);
         ex_percentage.setText(((index*100)/exercises.size()) + "");
+        if(index == 1)
+            prev_button.setDisable(true);
+        else
+            prev_button.setDisable(false);
+
+        if(index == exercises.size())
+            next_button.setDisable(true);
+        else
+            next_button.setDisable(false);
+
         {
             Parent p = exercises.get(index - 1).getGraphics();
             ex_container.getChildren().setAll(p);

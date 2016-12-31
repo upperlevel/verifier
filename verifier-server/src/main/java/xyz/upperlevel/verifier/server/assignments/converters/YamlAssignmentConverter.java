@@ -2,7 +2,10 @@ package xyz.upperlevel.verifier.server.assignments.converters;
 
 import org.yaml.snakeyaml.Yaml;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Map;
 
 public class YamlAssignmentConverter implements AssignmentConverter {
@@ -10,8 +13,10 @@ public class YamlAssignmentConverter implements AssignmentConverter {
 
     @SuppressWarnings("unchecked")
     @Override
-    public Map<String, Object> load(File file) throws FileNotFoundException {
-        return (Map<String, Object>) yaml.load(new FileReader(file));
+    public Map<String, Object> load(File file) throws IOException {
+        try(FileReader reader = new FileReader(file)) {
+            return (Map<String, Object>) yaml.load(reader);
+        }
     }
 
     @Override public void save(File file, Map<String, Object> data) throws IOException {

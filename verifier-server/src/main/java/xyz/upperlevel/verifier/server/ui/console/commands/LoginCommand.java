@@ -9,6 +9,7 @@ import xyz.upperlevel.verifier.server.login.LoginManager;
 
 import javax.swing.*;
 import java.io.Console;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +23,10 @@ public class LoginCommand extends NodeCommand {
 
         registerSub(new ListCommand());
         registerSub(new PasswordCommand());
+        registerSub(new ReloadCommand());
+        registerSub(new RegisterCommand());
+        registerSub(new SaveCommand());
+        registerSub(new BackupCommand());
     }
 
 
@@ -42,7 +47,15 @@ public class LoginCommand extends NodeCommand {
         @CommandRunner
         public void run(String clazz) {
             LoginManager manager = Main.getLoginManager();
-            List<AuthData> users = new ArrayList<>(manager.getClazz(clazz));
+            List<AuthData> users;
+
+            long stamp = manager.getLock().readLock();
+            try {
+                users = new ArrayList<>(manager.getClazz(clazz));
+            } finally {
+                manager.getLock().unlockRead(stamp);
+            }
+
             users.sort((a, b) -> a.getUsername().compareToIgnoreCase(b.getUsername()));
             for(AuthData data : users)
                 System.out.println("-" + data.getUsername());
@@ -65,32 +78,104 @@ public class LoginCommand extends NodeCommand {
                 System.out.println("Cannot find \"" + username + "\" in class \"" + clazz + "\"");
                 return;
             }
-            Console console = System.console();
-            if(console == null) {
-                System.out.println("Console not found, using java.swing");
-                JPasswordField pf = new JPasswordField();
-                int okCxl = JOptionPane.showConfirmDialog(null, pf, "Enter Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-                if (okCxl != JOptionPane.OK_OPTION) {
-                    System.out.println("Password NOT set");
-                    return;
-                }
+            char[] pssw = askPassword();
+            if(pssw != null) {
                 zero(data.getPassword());
-                data.setPassword(pf.getPassword());
-            } else {
-                char[] password = console.readPassword("Enter Password:");
-                char[] pssw2 = console.readPassword("Repeat Password:");
+                data.setPassword(pssw);
+                System.out.println("New password set, use \"login save\" to save the current changes");
+            } else
+                System.out.println("Password NOT set");
+        }
+    }
 
-                if (!Arrays.equals(password, pssw2)) {
-                    System.out.println("The two password do NOT match!");
-                    return;
-                }
+    public static class ReloadCommand extends Command {
+        public ReloadCommand() {
+            super("reload");
+        }
 
-                zero(pssw2);
-                zero(data.getPassword());
-                data.setPassword(password);
+        @CommandRunner
+        public void run() {
+            LoginManager manager = Main.getLoginManager();
+            manager.reload();
+        }
+    }
+
+    public static class RegisterCommand extends Command {
+        public RegisterCommand() {
+            super("register");
+            addAlias("reg");
+        }
+
+        @CommandRunner
+        public void run(String clazz, String[] username_raw) {
+            String username = String.join(" ", username_raw);
+            char[] pssw = askPassword();
+            if(pssw == null) {
+                System.out.println("Cannot register user");
+                return;
             }
-            System.out.println("New password set, use \"login save\" to save the new specs");
+            LoginManager manager = Main.getLoginManager();
+            if(manager.register(clazz, username, pssw)) {
+                System.out.println("User successfully registered, use \"login save\" to save the current changes");
+            } else {
+                System.out.println("Cannot register user: one with the same class and username already exists!");
+            }
+        }
+    }
+
+    public static class SaveCommand extends Command {
+        public SaveCommand() {
+            super("save");
+        }
+
+        @CommandRunner
+        public void run() {
+            try {
+                Main.getLoginManager().saveToFiles();
+            } catch (IOException e) {
+                System.err.println("Cannot save changes!");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static class BackupCommand extends Command {
+        public BackupCommand() {
+            super("backup");
+        }
+
+        @CommandRunner
+        public void run() {
+            try {
+                Main.getLoginManager().backupFiles();
+            } catch (IOException e) {
+                System.err.println("Cannot create backup entry!");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static char[] askPassword() {
+        Console console = System.console();
+        if(console == null) {
+            System.out.println("Console not found, using java.swing");
+            JPasswordField pf = new JPasswordField();
+            int okCxl = JOptionPane.showConfirmDialog(null, pf, "Enter Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (okCxl != JOptionPane.OK_OPTION)
+                return null;
+            return pf.getPassword();
+        } else {
+            char[] password = console.readPassword("Enter Password:");
+            char[] pssw2 = console.readPassword("Repeat Password:");
+
+            if (!Arrays.equals(password, pssw2)) {
+                System.out.println("The two password do NOT match!");
+                return null;
+            }
+
+            zero(pssw2);
+            return password;
         }
     }
 }

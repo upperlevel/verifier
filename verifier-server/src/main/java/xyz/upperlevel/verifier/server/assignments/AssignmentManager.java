@@ -8,7 +8,6 @@ import xyz.upperlevel.verifier.server.assignments.exceptions.AlreadyCommittedExc
 import xyz.upperlevel.verifier.server.login.AuthData;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,7 @@ public class AssignmentManager {
         }
     }
 
-    public void load(File file) throws FileNotFoundException {
+    public void load(File file) throws IOException {
         if(current != null)
             throw new IllegalStateException("Assignment already hosted!");
         synchronized (listeners) {

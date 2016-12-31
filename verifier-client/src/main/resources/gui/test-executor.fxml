@@ -88,9 +88,9 @@
                         <AnchorPane fx:id="ex_container" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS" />
                         <HBox VBox.vgrow="ALWAYS">
                            <children>
-                              <Button mnemonicParsing="false" onAction="#onPrevious" text="Prev" />
+                              <Button fx:id="prev_button" mnemonicParsing="false" onAction="#onPrevious" text="Prev" />
                               <Separator HBox.hgrow="ALWAYS" />
-                              <Button mnemonicParsing="false" onAction="#onNext" text="Next" />
+                              <Button fx:id="next_button" mnemonicParsing="false" onAction="#onNext" text="Next" />
                            </children>
                         </HBox>
                      </children>

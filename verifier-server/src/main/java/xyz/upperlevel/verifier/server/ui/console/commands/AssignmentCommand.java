@@ -99,8 +99,8 @@ public class AssignmentCommand extends NodeCommand {
                     exe(false, "Do you want ted-learning?", "No", "Mayb...No", "ehhhhh No", "Uhmmmm...No", "Lol, no!")
             ), "test-id");
 
-            try {
-                new Yaml().dump(ass.toYamlRequest(), new FileWriter(file));
+            try(FileWriter writer = new FileWriter(file)) {
+                new Yaml().dump(ass.toYamlRequest(), writer);
             } catch (IOException e) {
                 e.printStackTrace();
                 return;

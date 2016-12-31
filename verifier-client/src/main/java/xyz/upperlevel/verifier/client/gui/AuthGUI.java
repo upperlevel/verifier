@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 
 public class AuthGUI {
     private static final String FXML_PATH = "gui/auth.fxml";
-    private static final String TITLE = "Write credentials";
+    private static final String TITLE = "Auth";
 
     private Consumer<AuthToken> callback;
     private Parent root;

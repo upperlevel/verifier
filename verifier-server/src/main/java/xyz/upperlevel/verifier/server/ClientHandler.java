@@ -12,12 +12,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.concurrent.locks.StampedLock;
 
 public class ClientHandler {
     @Getter
     private final Channel channel;
 
-    private AuthData data = null;
+    public AuthData data = null;
+    public StampedLock authLock = new StampedLock();
 
     private Assignment sent = null;
 
@@ -29,8 +31,13 @@ public class ClientHandler {
 
 
     public void onDisconnect() {
-        if(data != null)
-            data.setLogged(false);
+        long stamp = authLock.readLock();
+        try {
+            if (data != null)
+                data.setLogged(null);
+        } finally {
+            authLock.unlockRead(stamp);
+        }
     }
 
     public void onAssignment(AssignmentPacket packet) {
@@ -46,7 +53,12 @@ public class ClientHandler {
         }
         try {
             log("Commited assignment");
-            Main.getAssignmentManager().commit(data, new Assignment(packet));
+            long stamp = authLock.readLock();
+            try {
+                Main.getAssignmentManager().commit(data, new Assignment(packet));
+            } finally {
+                authLock.unlockRead(stamp);
+            }
         } catch (AlreadyCommittedException e) {
             log("[WARN] tried to commit an already-commited assignment");
             send(new ErrorPacket(ErrorType.ASSIGNMENT, "Assignment already committed!"));
@@ -86,9 +98,14 @@ public class ClientHandler {
             log("Login error: bad username");
             send(new ErrorPacket(ErrorType.LOGIN_BAD_USER, "Username not found"));
         } else if (Arrays.equals(packet.getPassword(), data.getPassword())) {
-            this.data = data;
-            log("Logged in");
-            data.setLogged(true);
+            long stamp = authLock.writeLock();
+            try {
+                this.data = data;
+                log("Logged in");
+                this.data.setLogged(this);
+            } finally {
+                authLock.unlockWrite(stamp);
+            }
 
             sendAssignment();
         } else {
