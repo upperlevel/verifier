@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -91,12 +93,31 @@ public class AssignmentCommand extends NodeCommand {
         public void run(String path) {
             File file = new File(path);
             if(file.exists()) {
-                System.err.println("The path already exist");
+                System.err.println("The path already exists");
                 return;
             }
             AssignmentRequest ass = new AssignmentRequest(Arrays.asList(
-                    exe(true, "To be or not to be?", "To be", "Not to be"),
-                    exe(false, "Do you want ted-learning?", "No", "Mayb...No", "ehhhhh No", "Uhmmmm...No", "Lol, no!")
+                    exe(
+                            true,
+                            "To be or not to be?",
+                            2,
+                            Arrays.asList("To be", "Not to be"),
+                            Collections.singletonList(0)
+                    ),
+                    exe(
+                            false,
+                            "Do you want ted-learning?",
+                            4,
+                            Arrays.asList("No", "Mayb...No", "ehhhhh No", "Uhmmmm...No", "Lol, no!", "Hahah, no", "Nope", "Nada", "Nain!"),
+                            Arrays.asList(0, 4)
+                    ),
+                    exe(
+                            false,
+                            "What is the mass of the sun?",
+                            2,
+                            Arrays.asList("1.989x10^30", "3.14", "google", "a number", "a final double"),
+                            Arrays.asList(0, 4)
+                    )
             ), "test-id");
 
             try(FileWriter writer = new FileWriter(file)) {
@@ -109,11 +130,14 @@ public class AssignmentCommand extends NodeCommand {
         }
 
 
-        private static ExerciseRequest<?, ?> exe(boolean multi, String question, String... choices) {
+        private static ExerciseRequest<?, ?> exe(boolean multi, String question, int limit, List<String> choices, List<Integer> ans) {
             MultipleChoiceExerciseRequest exercise = new MultipleChoiceExerciseRequest(new MultipleChoiceExerciseHandler());
             exercise.multiple = multi;
             exercise.question = question;
-            exercise.choices = Arrays.asList(choices);
+            exercise.choices = choices;
+            exercise.limit = limit;
+
+            exercise.answers = new HashSet<>(ans);
             return exercise;
         }
     }

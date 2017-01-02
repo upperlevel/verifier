@@ -10,6 +10,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import lombok.EqualsAndHashCode;
 import xyz.upperlevel.verifier.exercises.ExerciseResponse;
+import xyz.upperlevel.verifier.exercises.util.Fraction;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -31,6 +32,16 @@ public class MultipleChoiceExerciseResponse extends ExerciseResponse<MultipleCho
         if(graphics == null)
             graphics = createGraphics();
         return graphics;
+    }
+
+    @Override
+    public Fraction correct() {
+        Set<Integer> correct = getParent().answers;
+
+        int corr_count = (int) answers.stream().filter(correct::contains).count();
+        int wrong_count = answers.size() - corr_count;
+
+        return new Fraction(corr_count - wrong_count, correct.size());
     }
 
     public Parent createGraphics() {

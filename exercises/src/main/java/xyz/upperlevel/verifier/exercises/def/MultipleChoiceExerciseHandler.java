@@ -9,6 +9,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static java.util.Collections.emptySet;
+
 public class MultipleChoiceExerciseHandler extends ExerciseType<MultipleChoiceExerciseRequest, MultipleChoiceExerciseResponse> {//TODO redo encoding/decoding
     public static final MultipleChoiceExerciseHandler INSTANCE = new MultipleChoiceExerciseHandler();
 
@@ -23,10 +25,10 @@ public class MultipleChoiceExerciseHandler extends ExerciseType<MultipleChoiceEx
         byte[] question_raw =  exe.question.getBytes(ByteConvUtils.DEF_CHARSET);
 
         List<String> choices = new ArrayList<>(exe.choices);
-        Collections.shuffle(choices, random);
-        if(choices.size() > exe.limit)
-            choices = choices.subList(0, exe.limit);
+        shuffleSelect(choices, exe.answers, exe.limit, random);
         byte[] choices_raw = ByteConvUtils.writeStringArray(choices);
+
+        //System.out.println("encode seed end:" + getSeed(random));
 
         return new ExerciseData(
                 exe.getType().type,
@@ -37,6 +39,31 @@ public class MultipleChoiceExerciseHandler extends ExerciseType<MultipleChoiceEx
                         .put(choices_raw)
                         .array()
         );
+    }
+
+    private <T> void shuffleSelect(List<T> in, Set<Integer> req, int limit, Random random) {
+        if(req.size() > in.size())
+            throw new IllegalArgumentException("The required fields are more than the actual fields! (req.length > in.length)");
+        if(limit > in.size())
+            throw new IllegalArgumentException("There aren't enough objects in the initial list to fulfill the limit! (limit > in.length)");
+        if(limit < req.size())
+            throw new IllegalArgumentException("Cannot fit all required in a list smaller than their number (req.length > limit)");
+
+        if(req.size() == in.size() || in.size() == limit) {
+            Collections.shuffle(in, random);
+            return;
+        }
+
+        int index = 0;
+        for(int i : req) //Put the required ints before the others
+            Collections.swap(in, index++, i);
+
+        if(limit - index > 0)
+            Collections.shuffle(in.subList(index, in.size()), random);
+
+        in.subList(limit, in.size()).clear();
+
+        Collections.shuffle(in, random);
     }
 
     @Override
@@ -61,6 +88,8 @@ public class MultipleChoiceExerciseHandler extends ExerciseType<MultipleChoiceEx
 
         res.put("choices", exe.choices);
         res.put("limit", exe.limit);
+
+        res.put("answers", new ArrayList<>(exe.answers));
 
         return res;
     }
@@ -90,7 +119,9 @@ public class MultipleChoiceExerciseHandler extends ExerciseType<MultipleChoiceEx
         MultipleChoiceExerciseResponse exe = newRes(req);
 
         List<Integer> mapping = IntStream.range(0, req.choices.size()).boxed().collect(Collectors.toList());
-        Collections.shuffle(mapping, random);
+        shuffleSelect(mapping, req.answers, req.limit, random);
+
+        //System.out.println("encode seed end:" + getSeed(random));
 
         //System.out.println("mapping: " + mapping);
 
@@ -110,6 +141,9 @@ public class MultipleChoiceExerciseHandler extends ExerciseType<MultipleChoiceEx
         exe.question = (String) yaml.get("question");
         exe.choices = (List<String>)yaml.get("choices");
         exe.limit = (Integer)yaml.getOrDefault("limit", exe.choices.size());
+
+        List<Integer> ans = (List<Integer>) yaml.get("answers");
+        exe.answers = ans == null ? emptySet() : new HashSet<>(ans);
 
         return exe;
     }

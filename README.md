@@ -10,7 +10,7 @@ This has a lot things to implement before the first version in relased
  - [x] exercise randomization (based on user and exercise)
  - [ ] more exercise types
  - [x] order-free names
- - [ ] exercise pre-correction (and make sure to send the answers, lol)
+ - [x] exercise pre-correction (and make sure to send the answers, lol)
 
 ## Simple server tutorial
 Even if this has a lot of things that need to be implemented, it's still working, so here's a little tutorial in how to make it work:<br>

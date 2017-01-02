@@ -24,9 +24,10 @@ public class MultipleChoiceExerciseTest extends TestCase {
 
 
             request.question = "To be or not to be";
-            request.choices = Arrays.asList("To be", "Not to be", "Maybe be", "I hate bees");
+            request.choices = Arrays.asList("0", "1", "2", "3");
             request.multiple = true;
             request.limit = 4;
+            request.answers = new HashSet<>(Arrays.asList(0, 3));
 
             {
                 received = handler.decodeRequest(handler.encodeRequest(request, new Random(seed)).getData());
@@ -42,29 +43,29 @@ public class MultipleChoiceExerciseTest extends TestCase {
             );
         }
         {
-            /*System.out.println("Sent: " + request.choices);
-            System.out.println("Received: " + received.choices);*/
-            Set<String> choosen = new HashSet<>(Arrays.asList(request.choices.get(1), request.choices.get(3)));
+            System.out.println("Sent: " + request.choices);
+            System.out.println("Received: " + received.choices);
+            Set<String> chosen = new HashSet<>(Arrays.asList(request.choices.get(1), request.choices.get(3)));
 
             MultipleChoiceExerciseResponse exercise = new MultipleChoiceExerciseResponse(handler, request);
 
-            exercise.answers = choosen.stream()
+            exercise.answers = chosen.stream()
                     .map(o -> received.choices.indexOf(o))
                     .collect(Collectors.toSet());
 
-            //System.out.println("choosed: " + choosen + " -> " + exercise.answers);
+            System.out.println("chosen: " + chosen + " -> " + exercise.answers);
 
             {
                 MultipleChoiceExerciseResponse exe = handler.decodeResponse(handler.encodeResponse(exercise).getData(), request, new Random(seed));
 
-                //System.out.println("server->" + exe.answers + "->" + exe.answers.stream().map(i -> request.choices.get(i)).collect(Collectors.toList()));
+                System.out.println("server->" + exe.answers + "->" + exe.answers.stream().map(i -> request.choices.get(i)).collect(Collectors.toList()));
 
-                assert exe.answers.size() == exercise.answers.size();//Just for a litle bit more debugging, lol
+                assertEquals(exercise.answers.size(), exe.answers.size());//Just for a litle bit more debugging, lol
                 //Do NOT compare the raw answers (numbers) but the choices associated with them
-                assert (exe.answers.stream().map(i -> request.choices.get(i)).collect(Collectors.toSet()))
-                        .equals(
-                                exercise.answers.stream().map(i -> received.choices.get(i)).collect(Collectors.toSet())
-                        );
+                assertEquals (
+                        exercise.answers.stream().map(i -> received.choices.get(i)).collect(Collectors.toSet()),
+                        exe.answers.stream().map(i -> request.choices.get(i)).collect(Collectors.toSet())
+                );
             }
             assertEquals(
                     handler.fromYamlResponse(
