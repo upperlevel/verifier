@@ -3,8 +3,8 @@ package xyz.upperlevel.verifier.client.gui;
 import javafx.application.Application;
 import javafx.application.Platform;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import xyz.upperlevel.verifier.client.Assignment;
 import xyz.upperlevel.verifier.client.AuthToken;
+import xyz.upperlevel.verifier.client.assignments.AssignmentRequest;
 import xyz.upperlevel.verifier.proto.ErrorType;
 
 import javax.swing.*;
@@ -37,7 +37,7 @@ public class SimpleGUI implements UI {
     }
 
     @Override
-    public void openAssignment(Assignment assignment) {
+    public void openAssignment(AssignmentRequest assignment) {
         Platform.runLater(() -> AssignmentGUI.getInstance().show(assignment));
     }
 

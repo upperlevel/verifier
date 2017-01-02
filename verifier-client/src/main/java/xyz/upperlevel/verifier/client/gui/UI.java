@@ -1,7 +1,7 @@
 package xyz.upperlevel.verifier.client.gui;
 
-import xyz.upperlevel.verifier.client.Assignment;
 import xyz.upperlevel.verifier.client.AuthToken;
+import xyz.upperlevel.verifier.client.assignments.AssignmentRequest;
 import xyz.upperlevel.verifier.proto.ErrorType;
 
 import java.util.List;
@@ -15,7 +15,7 @@ public interface UI {
 
     public void chooseAssignment(List<Object> assignments, Consumer<Object> callback);
 
-    public void openAssignment(Assignment assignment);
+    public void openAssignment(AssignmentRequest assignment);
 
     public void requestLogin(Consumer<AuthToken> callback);
 

@@ -8,25 +8,21 @@ import xyz.upperlevel.verifier.proto.ExerciseData;
 import java.util.Map;
 
 @AllArgsConstructor
-public abstract class Exercise<E extends Exercise<E>> {
+public abstract class ExerciseResponse<R extends ExerciseRequest, E extends ExerciseResponse> {
     @Getter
-    private final ExerciseType<E> type;
+    private final ExerciseType<R, E> type;
+
+    @Getter
+    private final R parent;
 
     public abstract Parent getGraphics();
 
-    public ExerciseData encodeRequest() {
-        return type.encodeRequest(getThis());
-    }
-
-    public ExerciseData encodeResponse() {
+    public ExerciseData encode() {
         return type.encodeResponse(getThis());
     }
 
-    public Map<String, Object> toYamlRequest() {
-        return type.toYamlRequest(getThis());
-    }
 
-    public Map<String, Object> toYamlResponse() {
+    public Map<String, Object> toYaml() {
         return type.toYamlResponse(getThis());
     }
 

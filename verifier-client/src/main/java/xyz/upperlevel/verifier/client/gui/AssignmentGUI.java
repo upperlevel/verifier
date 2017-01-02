@@ -6,8 +6,8 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import lombok.Getter;
-import xyz.upperlevel.verifier.client.Assignment;
 import xyz.upperlevel.verifier.client.Main;
+import xyz.upperlevel.verifier.client.assignments.AssignmentRequest;
 
 import java.net.URL;
 
@@ -46,8 +46,8 @@ public class AssignmentGUI extends Application {
         return instance;
     }
 
-    public void show(Assignment assignment) {
-        controller.init(assignment.getId(), assignment.getExercises());
+    public void show(AssignmentRequest assignment) {
+        controller.init(assignment);
         stage.show();
     }
 

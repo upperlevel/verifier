@@ -5,8 +5,8 @@ import xyz.upperlevel.verifier.exercises.ExerciseTypeManager;
 import xyz.upperlevel.verifier.packetlib.simple.PacketExecutorManager;
 import xyz.upperlevel.verifier.packetlib.simple.SimpleServer;
 import xyz.upperlevel.verifier.proto.*;
-import xyz.upperlevel.verifier.server.assignments.Assignment;
 import xyz.upperlevel.verifier.server.assignments.AssignmentManager;
+import xyz.upperlevel.verifier.server.assignments.AssignmentRequest;
 import xyz.upperlevel.verifier.server.login.LoginManager;
 import xyz.upperlevel.verifier.server.ui.UI;
 import xyz.upperlevel.verifier.server.ui.console.ConsoleUI;
@@ -61,7 +61,7 @@ public class Main {
         });
     }
 
-    public static Assignment currentAssignment() {
+    public static AssignmentRequest currentAssignment() {
         return assignmentManager.getCurrent();
     }
 

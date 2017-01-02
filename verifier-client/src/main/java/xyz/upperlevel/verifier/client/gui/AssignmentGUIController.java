@@ -15,20 +15,22 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.AnchorPane;
 import javafx.util.Callback;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import xyz.upperlevel.verifier.client.Assignment;
 import xyz.upperlevel.verifier.client.Main;
-import xyz.upperlevel.verifier.exercises.Exercise;
+import xyz.upperlevel.verifier.client.assignments.AssignmentRequest;
+import xyz.upperlevel.verifier.client.assignments.AssignmentResponse;
+import xyz.upperlevel.verifier.exercises.ExerciseRequest;
+import xyz.upperlevel.verifier.exercises.ExerciseResponse;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.net.URL;
-import java.util.List;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class AssignmentGUIController implements Initializable {
     @FXML
-    public ListView<Exercise> exercises_view;
+    public ListView<ExerciseResponse> exercises_view;
 
     @FXML
     public Label ex_number;
@@ -57,17 +59,17 @@ public class AssignmentGUIController implements Initializable {
     private DoubleProperty property;
 
     @FXML
-    private ObservableList<Exercise> exercises;
+    private ObservableList<ExerciseResponse> exercises;
 
-    private String assignmentId;
+    private AssignmentRequest request;
 
-    public void init(String assignmentId, List<Exercise> exercises) {
-        init(assignmentId, FXCollections.observableList(exercises));
+    public void init(AssignmentRequest request) {
+        init(request, FXCollections.observableList(request.getExercises().stream().map(ExerciseRequest::getResponse).collect(Collectors.toList())));
     }
 
-    public void init(String assignmentId, ObservableList<Exercise> exercises) {
+    public void init(AssignmentRequest request, ObservableList<ExerciseResponse> exercises) {
         this.exercises = Objects.requireNonNull(exercises);
-        this.assignmentId = assignmentId;
+        this.request = request;
 
         exercises_view.setItems(exercises);
         exercises_view.setCellFactory(new CustomCellFactory());
@@ -101,8 +103,8 @@ public class AssignmentGUIController implements Initializable {
         );
 
         if(response == 1) {
-            Main.onSendAssignment(new Assignment(assignmentId, exercises));
-            close0();
+            Main.onSendAssignment(new AssignmentResponse(request, exercises));
+            //Main should close itself
         }
     }
 
@@ -125,6 +127,7 @@ public class AssignmentGUIController implements Initializable {
 
     protected void close0() {
         AssignmentGUI.getInstance().getStage().hide();
+        Main.shutdown();
     }
 
     @FXML
@@ -206,15 +209,15 @@ public class AssignmentGUIController implements Initializable {
         });
     }
 
-    private static class CustomCellFactory implements Callback<ListView<Exercise>, ListCell<Exercise>> {
-        @Override public ListCell<Exercise> call(ListView<Exercise> param) {
-            return new ListCell<Exercise>() {
+    private static class CustomCellFactory implements Callback<ListView<ExerciseResponse>, ListCell<ExerciseResponse>> {
+        @Override public ListCell<ExerciseResponse> call(ListView<ExerciseResponse> param) {
+            return new ListCell<ExerciseResponse>() {
 
                 @Override
-                protected void updateItem(Exercise item, boolean empty) {
+                protected void updateItem(ExerciseResponse item, boolean empty) {
                     super.updateItem(item, empty);
                     if (item != null)
-                        setText(item.toString());
+                        setText(item.getParent().toString());
                     else
                         setText("");
                 }

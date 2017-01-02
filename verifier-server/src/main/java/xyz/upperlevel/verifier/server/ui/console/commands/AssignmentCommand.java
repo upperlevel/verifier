@@ -4,11 +4,12 @@ import org.yaml.snakeyaml.Yaml;
 import xyz.upperlevel.commandapi.CommandRunner;
 import xyz.upperlevel.commandapi.commands.Command;
 import xyz.upperlevel.commandapi.commands.NodeCommand;
-import xyz.upperlevel.verifier.exercises.Exercise;
-import xyz.upperlevel.verifier.exercises.def.MultipleChoiceExercise;
+import xyz.upperlevel.verifier.exercises.ExerciseRequest;
 import xyz.upperlevel.verifier.exercises.def.MultipleChoiceExerciseHandler;
+import xyz.upperlevel.verifier.exercises.def.MultipleChoiceExerciseRequest;
 import xyz.upperlevel.verifier.server.Main;
 import xyz.upperlevel.verifier.server.assignments.AssignmentManager;
+import xyz.upperlevel.verifier.server.assignments.AssignmentRequest;
 import xyz.upperlevel.verifier.server.login.AuthData;
 
 import java.io.File;
@@ -93,13 +94,13 @@ public class AssignmentCommand extends NodeCommand {
                 System.err.println("The path already exist");
                 return;
             }
-            xyz.upperlevel.verifier.server.assignments.Assignment ass = new xyz.upperlevel.verifier.server.assignments.Assignment(Arrays.asList(
+            AssignmentRequest ass = new AssignmentRequest(Arrays.asList(
                     exe(true, "To be or not to be?", "To be", "Not to be"),
                     exe(false, "Do you want ted-learning?", "No", "Mayb...No", "ehhhhh No", "Uhmmmm...No", "Lol, no!")
             ), "test-id");
 
             try(FileWriter writer = new FileWriter(file)) {
-                new Yaml().dump(ass.toYamlRequest(), writer);
+                new Yaml().dump(ass.toYaml(), writer);
             } catch (IOException e) {
                 e.printStackTrace();
                 return;
@@ -108,8 +109,8 @@ public class AssignmentCommand extends NodeCommand {
         }
 
 
-        private static Exercise<?> exe(boolean multi, String question, String... choices) {
-            MultipleChoiceExercise exercise = new MultipleChoiceExercise(new MultipleChoiceExerciseHandler());
+        private static ExerciseRequest<?, ?> exe(boolean multi, String question, String... choices) {
+            MultipleChoiceExerciseRequest exercise = new MultipleChoiceExerciseRequest(new MultipleChoiceExerciseHandler());
             exercise.multiple = multi;
             exercise.question = question;
             exercise.choices = Arrays.asList(choices);

@@ -24,7 +24,7 @@ public class ExerciseCommand extends NodeCommand{
         @CommandRunner
         public void run() {
             ExerciseTypeManager manager = Main.getExerciseTypeManager();
-            for(ExerciseType<?> exe : manager.get())
+            for(ExerciseType<?, ?> exe : manager.get())
                 System.out.println("-" + exe.type);
         }
     }

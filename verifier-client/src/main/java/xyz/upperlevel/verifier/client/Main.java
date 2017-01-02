@@ -1,11 +1,13 @@
 package xyz.upperlevel.verifier.client;
 
 import javafx.application.Platform;
+import xyz.upperlevel.verifier.client.assignments.AssignmentRequest;
+import xyz.upperlevel.verifier.client.assignments.AssignmentResponse;
 import xyz.upperlevel.verifier.client.conn.Connection;
 import xyz.upperlevel.verifier.client.conn.ConnectionHandler;
 import xyz.upperlevel.verifier.client.gui.SimpleGUI;
 import xyz.upperlevel.verifier.client.gui.UI;
-import xyz.upperlevel.verifier.exercises.Exercise;
+import xyz.upperlevel.verifier.exercises.ExerciseResponse;
 import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.exercises.ExerciseTypeManager;
 import xyz.upperlevel.verifier.proto.ErrorType;
@@ -97,16 +99,16 @@ public class Main implements PacketListener{
         parseAssignment(id, exercises, ui::openAssignment);
     }
 
-    private void parseAssignment(String id, List<ExerciseData> exercises, Consumer<Assignment> callback) {
+    private void parseAssignment(String id, List<ExerciseData> exercises, Consumer<AssignmentRequest> callback) {
         state = State.ASSIGNMENT_WAIT;
         ExerciseUtil.getAllOrWait(
                 exercises.stream()
                         .map(ExerciseData::getType)
                         .collect(Collectors.toList()),
-                (List<ExerciseType<?>> handlers) -> {
+                (List<ExerciseType<?, ?>> handlers) -> {
                     if (exercises.size() != handlers.size())
                         throw new RuntimeException("The handlers returned aren't paired with the exercises!");
-                    Assignment assignment = new Assignment(
+                    AssignmentRequest assignment = new AssignmentRequest(
                             id,
                             IntStream
                                     .range(0, exercises.size())
@@ -128,13 +130,14 @@ public class Main implements PacketListener{
         System.out.println("Shutdown completed");
     }
 
-    public static void onSendAssignment(Assignment assignment) {
+    public static void onSendAssignment(AssignmentResponse assignment) {
         instance.conn.sendAssignment(
                 assignment.getId(),
                 assignment.getExercises().stream()
-                        .map(Exercise::encodeResponse)
+                        .map(ExerciseResponse::encode)
                         .collect(Collectors.toList())
         );
+        shutdown();
     }
 
     @Override

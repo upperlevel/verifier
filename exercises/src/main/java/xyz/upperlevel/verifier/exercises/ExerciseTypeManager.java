@@ -20,8 +20,8 @@ public class ExerciseTypeManager {
     public static final String EX_FOLDER_NAME = "exercises";
     public static final File EX_FOLDER;
 
-    protected Map<String, ExerciseType<?>> exercises = new HashMap<>();
-    protected List<Consumer<ExerciseType<?>>> listeners = new ArrayList<>();
+    protected Map<String, ExerciseType<?, ?>> exercises = new HashMap<>();
+    protected List<Consumer<ExerciseType<?, ?>>> listeners = new ArrayList<>();
 
     static {
         EX_FOLDER = new File(EX_FOLDER_NAME);
@@ -46,11 +46,11 @@ public class ExerciseTypeManager {
         }
     }
 
-    public boolean register(ExerciseType<?> handler) {
+    public boolean register(ExerciseType<?, ?> handler) {
         return exercises.putIfAbsent(handler.type, handler) == null;
     }
 
-    public boolean remove(ExerciseType<?> handler) {
+    public boolean remove(ExerciseType<?, ?> handler) {
         return exercises.remove(handler.type) != null;
     }
 
@@ -58,15 +58,15 @@ public class ExerciseTypeManager {
         return exercises.remove(type) != null;
     }
 
-    public boolean registerOverride(ExerciseType<?> handler) {
+    public boolean registerOverride(ExerciseType<?, ?> handler) {
         return exercises.put(handler.type, handler) != null;
     }
 
-    public ExerciseType<?> get(String type) {
+    public ExerciseType<?, ?> get(String type) {
         return exercises.get(type);
     }
 
-    public Path getFile(ExerciseType<?> type) {
+    public Path getFile(ExerciseType<?, ?> type) {
         CodeSource source = type.getClass().getProtectionDomain().getCodeSource();
         if(source == null) {
             System.err.println("[WARNING]Cannot determine the Soruce of \"" + type.getClass().getSimpleName() + "\"");
@@ -81,19 +81,19 @@ public class ExerciseTypeManager {
         return null;
     }
 
-    public void registerListener(Consumer<ExerciseType<?>> event) {
+    public void registerListener(Consumer<ExerciseType<?, ?>> event) {
         listeners.add(event);
     }
 
     public void register(String exName, byte[] data) throws IOException, IllegalAccessException, InstantiationException, ClassNotFoundException {
-        for (ExerciseType<?> handler : load(save(new File(EX_FOLDER, exName + ".jar"), data).getPath()))
+        for (ExerciseType<?, ?> handler : load(save(new File(EX_FOLDER, exName + ".jar"), data).getPath()))
             listeners.forEach(t -> t.accept(handler));
     }
 
-    private List<ExerciseType<?>> load(String pathToJar) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
+    private List<ExerciseType<?, ?>> load(String pathToJar) throws IOException, ClassNotFoundException, IllegalAccessException, InstantiationException {
         JarFile jarFile = new JarFile(pathToJar);
         Enumeration<JarEntry> e = jarFile.entries();
-        List<ExerciseType<?>> res = new ArrayList<>();
+        List<ExerciseType<?, ?>> res = new ArrayList<>();
 
         URL[] urls = {new URL("jar:file:" + pathToJar + "!/")};
         URLClassLoader cl = URLClassLoader.newInstance(urls);
@@ -108,7 +108,7 @@ public class ExerciseTypeManager {
             className = className.replace('/', '.');
             Class c = cl.loadClass(className);
             if(ExerciseType.class.isAssignableFrom(c)) {
-                ExerciseType<?> handler = (ExerciseType<?>) c.newInstance();
+                ExerciseType<?, ?> handler = (ExerciseType<?, ?>) c.newInstance();
                 register(handler);
                 res.add(handler);
             }
@@ -123,7 +123,7 @@ public class ExerciseTypeManager {
         return file;
     }
 
-    public Collection<ExerciseType<?>> get() {
+    public Collection<ExerciseType<?, ?>> get() {
         return exercises.values();
     }
 }

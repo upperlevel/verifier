@@ -24,12 +24,16 @@ public class AssignmentPacket {
     private final String id;
 
     @Getter
-    private final List<ExerciseData> exercises;
+    private List<ExerciseData> exercises;
 
     private byte[] encoded = null;
 
     public AssignmentPacket(String id, List<ExerciseData> exercises) {
         this.id = id;
+        this.exercises = exercises;
+    }
+
+    public void setExercises(List<ExerciseData> exercises) {
         this.exercises = exercises;
     }
 
@@ -88,8 +92,6 @@ public class AssignmentPacket {
         }
         return new AssignmentPacket(id, exercises);
     }
-
-
 
 
     private static class AssignmentPacketHandler extends PacketHandler<AssignmentPacket> {

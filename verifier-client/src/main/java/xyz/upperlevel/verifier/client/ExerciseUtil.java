@@ -13,27 +13,27 @@ import java.util.function.Consumer;
 public class ExerciseUtil {
     protected static final ExecutorService waiters = Executors.newSingleThreadExecutor();
 
-    protected static Map<String, Consumer<ExerciseType<?>>> listeners = new HashMap<>();
+    protected static Map<String, Consumer<ExerciseType<?, ?>>> listeners = new HashMap<>();
 
     static {
         Main.getExerciseManager().registerListener(ExerciseUtil::onExType);
     }
 
 
-    protected static void onExType(ExerciseType<?> reg) {
-        Consumer<ExerciseType<?>> listener = listeners.remove(reg.type);
+    protected static void onExType(ExerciseType<?, ?> reg) {
+        Consumer<ExerciseType<?, ?>> listener = listeners.remove(reg.type);
         if(listener != null)
             listener.accept(reg);
     }
 
-    public static Future<ExerciseType<?>> ask(String type) {
+    public static Future<ExerciseType<?, ?>> ask(String type) {
         ExerciseTypeManager manager = Main.getExerciseManager();
-        ExerciseType<?> handler = manager.get(type);
+        ExerciseType<?, ?> handler = manager.get(type);
         if(handler != null)
             return CompletableFuture.completedFuture(handler);
         else {
             Main.getConnection().sendExerciseTypeRequest(type);
-            CompletableFuture<ExerciseType<?>> res = new CompletableFuture<>();
+            CompletableFuture<ExerciseType<?, ?>> res = new CompletableFuture<>();
 
             listeners.put(type, res::complete);
             return res;
@@ -45,9 +45,9 @@ public class ExerciseUtil {
      * @param types the types that want to be converted
      * @param callback the callback to be executed
      */
-    public static void getAllOrWait(List<String> types, Consumer<List<ExerciseType<?>>> callback) {
+    public static void getAllOrWait(List<String> types, Consumer<List<ExerciseType<?, ?>>> callback) {
         ExerciseTypeManager manager = Main.getExerciseManager();
-        ExerciseType<?>[] found = new ExerciseType[types.size()];
+        ExerciseType<?, ?>[] found = new ExerciseType[types.size()];
         int index = 0;
 
         Iterator<String> iterator = types.iterator();
@@ -56,7 +56,7 @@ public class ExerciseUtil {
             found[index] = manager.get(str);
             if(found[index] == null) {
                 //Sync failure, go async and wait
-                List<Future<ExerciseType<?>>> handlers = new ArrayList<>();
+                List<Future<ExerciseType<?, ?>>> handlers = new ArrayList<>();
                 for(int i = 0; i < index; i++)
                     handlers.add(CompletableFuture.completedFuture(found[i]));
                 handlers.add(ask(str));
@@ -69,9 +69,9 @@ public class ExerciseUtil {
         callback.accept(Arrays.asList(found));
     }
 
-    public static void waitAll(List<Future<ExerciseType<?>>> handlers, Consumer<List<ExerciseType<?>>> callback) {
+    public static void waitAll(List<Future<ExerciseType<?, ?>>> handlers, Consumer<List<ExerciseType<?, ?>>> callback) {
         ExerciseWaiter waiter = new ExerciseWaiter(handlers, callback);
-        for(Future<ExerciseType<?>> f : handlers)
+        for(Future<ExerciseType<?, ?>> f : handlers)
             if(!f.isDone()) {
                 waiter.async();
                 return;
@@ -81,10 +81,10 @@ public class ExerciseUtil {
 
     public static class ExerciseWaiter {
 
-        private final List<Future<ExerciseType<?>>> handlers;
-        private final Consumer<List<ExerciseType<?>>> callback;
+        private final List<Future<ExerciseType<?, ?>>> handlers;
+        private final Consumer<List<ExerciseType<?, ?>>> callback;
 
-        public ExerciseWaiter(List<Future<ExerciseType<?>>> handlers, Consumer<List<ExerciseType<?>>> callback) {
+        public ExerciseWaiter(List<Future<ExerciseType<?, ?>>> handlers, Consumer<List<ExerciseType<?, ?>>> callback) {
             this.handlers = handlers;
             this.callback = callback;
         }
@@ -94,9 +94,9 @@ public class ExerciseUtil {
         }
 
         public void sync() {
-            ExerciseType<?>[] res = new ExerciseType[handlers.size()];
+            ExerciseType<?, ?>[] res = new ExerciseType[handlers.size()];
             int i = 0;
-            for (Future<ExerciseType<?>> handler : handlers)
+            for (Future<ExerciseType<?, ?>> handler : handlers)
                 try {
                     res[i++] = handler.get();
                 } catch (Exception e) {

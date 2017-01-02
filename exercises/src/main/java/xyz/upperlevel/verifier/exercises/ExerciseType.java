@@ -5,26 +5,27 @@ import xyz.upperlevel.verifier.proto.ExerciseData;
 
 import java.util.IllegalFormatException;
 import java.util.Map;
+import java.util.Random;
 
 @AllArgsConstructor
-public abstract class ExerciseType<E extends Exercise> {
+public abstract class ExerciseType<A extends ExerciseRequest, B extends ExerciseResponse> {
     public final String type;
 
 
-    public abstract ExerciseData encodeRequest(E exe);
+    public abstract ExerciseData encodeRequest(A exe, Random random);
 
-    public abstract ExerciseData encodeResponse(E exe);
+    public abstract Map<String, Object> toYamlRequest(A exe);
 
-    public abstract Map<String, Object> toYamlRequest(E exe);
+    public abstract A decodeRequest(byte[] encoded) throws IllegalFormatException;
 
-    public abstract Map<String, Object> toYamlResponse(E exe);
+    public abstract A fromYamlRequest(Map<String, Object> yaml);
 
 
-    public abstract E decodeRequest(byte[] encoded) throws IllegalFormatException;
+    public abstract ExerciseData encodeResponse(B exe);
 
-    public abstract E decodeResponse(byte[] encoded) throws IllegalFormatException;
+    public abstract Map<String, Object> toYamlResponse(B exe);
 
-    public abstract E fromYamlRequest(Map<String, Object> yaml);
+    public abstract B decodeResponse(byte[] encoded, A req, Random random) throws IllegalFormatException;
 
-    public abstract E fromYamlResponse(Map<String, Object> yaml);
+    public abstract B fromYamlResponse(Map<String, Object> yaml, A req);
 }

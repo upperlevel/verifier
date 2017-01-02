@@ -1,53 +1,56 @@
 package xyz.upperlevel.verifier.server.assignments;
 
 import lombok.Getter;
-import xyz.upperlevel.verifier.exercises.Exercise;
+import xyz.upperlevel.verifier.exercises.ExerciseRequest;
 import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.exercises.ExerciseTypeManager;
 import xyz.upperlevel.verifier.proto.AssignmentPacket;
+import xyz.upperlevel.verifier.proto.ExerciseData;
 import xyz.upperlevel.verifier.server.Main;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-public class Assignment {
+public class AssignmentRequest {
     @Getter
-    private final List<Exercise<?>> exercises;
-    @Getter
-    private final AssignmentPacket packet;
+    private final List<ExerciseRequest<?, ?>> exercises;
 
     @Getter
     private final String id;
 
-    public Assignment(List<Exercise<?>> exercises, String id) {
+    public AssignmentRequest(List<ExerciseRequest<?, ?>> exercises, String id) {
         this.exercises = exercises;
-        packet = new AssignmentPacket(
-                id,
-                exercises.stream()
-                        .map(Exercise::encodeRequest)
-                        .collect(Collectors.toList())
-        );
         this.id = id;
     }
 
-    public Assignment(Map<String, Object> load, String id) {
+    public AssignmentPacket getPacket(Random random) {
+        int[] mapping = IntStream.range(0, exercises.size()).toArray();
+        Collections.shuffle(Arrays.asList(mapping), random);
+
+        AssignmentPacket packet = new AssignmentPacket(
+                id,
+                exercises.stream()
+                        .map((exercise) -> exercise.encode(random))
+                        .collect(Collectors.toList())
+        );
+        {//map-based shuffle
+            List<ExerciseData> in = packet.getExercises();
+            ExerciseData[] exes = new ExerciseData[in.size()];
+            for(int i = 0; i < exes.length; i++)
+                exes[mapping[i]] = in.get(i);
+            packet.setExercises(Arrays.asList(exes));
+        }
+        return packet;
+    }
+
+    public AssignmentRequest(Map<String, Object> load, String id) {
         this(parse(load), id);
     }
 
-    public Assignment(AssignmentPacket packet) {
-        this.id = packet.getId();
-        this.exercises = packet.getExercises()
-                .stream()
-                .map( t -> (Exercise<?>)Main.getExerciseTypeManager().get(t.getType()).decodeResponse(t.getData()))
-                .collect(Collectors.toList());
-        this.packet = packet;
-
-    }
-
     @SuppressWarnings("unchecked")
-    public static List<Exercise<?>> parse(Map<String, Object> map) {
-        List<Exercise<?>> res = new ArrayList<>(128);
+    public static List<ExerciseRequest<?, ?>> parse(Map<String, Object> map) {
+        List<ExerciseRequest<?, ?>> res = new ArrayList<>(128);
         final ExerciseTypeManager manager = Main.getExerciseTypeManager();
 
         if(map == null)
@@ -67,7 +70,7 @@ public class Assignment {
             if(data == null)
                 throw new IllegalArgumentException("The loaded assignment doesn't have a \"data\" field (for the exercise's data)");
 
-            ExerciseType<?> ex_type = manager.get(type);
+            ExerciseType<?, ?> ex_type = manager.get(type);
 
             if(ex_type == null)
                 throw new IllegalArgumentException("Type not registered: \"" + type + "\"");
@@ -77,25 +80,17 @@ public class Assignment {
         return res;
     }
 
-    public Map<String, Object> toYaml(Function<Exercise<?>, Map<String, Object>> transformer) {
+    public Map<String, Object> toYaml() {
         return Collections.singletonMap(
                 "exercises",
                 exercises.stream()
                         .map(exe -> {
                             HashMap<String, Object> map = new HashMap<>(2);
                             map.put("type", exe.getType().type);
-                            map.put("data", transformer.apply(exe));
+                            map.put("data", exe.toYaml());
                             return map;
                         })
                         .collect(Collectors.toList())
         );
-    }
-
-    public Map<String, Object> toYamlResponse() {
-        return toYaml(Exercise::toYamlResponse);
-    }
-
-    public Map<String, Object> toYamlRequest() {
-        return toYaml(Exercise::toYamlRequest);
     }
 }

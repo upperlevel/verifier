@@ -9,28 +9,22 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import lombok.EqualsAndHashCode;
-import xyz.upperlevel.verifier.exercises.Exercise;
+import xyz.upperlevel.verifier.exercises.ExerciseResponse;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-@EqualsAndHashCode(of={"multiple", "question", "choices"}, callSuper = false)
-public class MultipleChoiceExercise extends Exercise<MultipleChoiceExercise> {
-
-    public Boolean multiple;
-    public String question;
-    public List<String> choices;
+@EqualsAndHashCode(of = "answers", callSuper = false)
+public class MultipleChoiceExerciseResponse extends ExerciseResponse<MultipleChoiceExerciseRequest, MultipleChoiceExerciseResponse> {
 
     public Set<Integer> answers = Collections.emptySet();
 
-    private volatile Parent graphics = null;
+    private Parent graphics = null;
 
-    public MultipleChoiceExercise(MultipleChoiceExerciseHandler handler) {
-        super(handler);
+    public MultipleChoiceExerciseResponse(MultipleChoiceExerciseHandler type, MultipleChoiceExerciseRequest req) {
+        super(type, req);
     }
-
 
     @Override
     public Parent getGraphics() {
@@ -40,16 +34,19 @@ public class MultipleChoiceExercise extends Exercise<MultipleChoiceExercise> {
     }
 
     public Parent createGraphics() {
+        final MultipleChoiceExerciseRequest req = getParent();
+
         BorderPane parent = new BorderPane();
-        Label question_field = new Label(question);
+
+        Label question_field = new Label(req.question);
         parent.setTop(question_field);
         VBox box = new VBox(10);
         box.setPadding(new Insets(20));
-        if(multiple) {
-            answers = new HashSet<>(choices.size());
-            for(int i = 0; i < choices.size(); i++) {
+        if(req.multiple) {
+            answers = new HashSet<>(req.choices.size());
+            for(int i = 0; i < req.choices.size(); i++) {
                 final int choice_num = i;
-                CheckBox choice = new CheckBox(choices.get(i));
+                CheckBox choice = new CheckBox(req.choices.get(i));
                 choice.selectedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue)
                         answers.add(choice_num);
@@ -60,8 +57,8 @@ public class MultipleChoiceExercise extends Exercise<MultipleChoiceExercise> {
             }
         } else {
             ToggleGroup group = new ToggleGroup();
-            for (int i = 0; i < choices.size(); i++) {
-                RadioButton choice = new RadioButton(choices.get(i));
+            for (int i = 0; i < req.choices.size(); i++) {
+                RadioButton choice = new RadioButton(req.choices.get(i));
                 choice.setToggleGroup(group);
                 final int choice_num = i;
                 choice.selectedProperty().addListener((observable, oldValue, newValue) -> {
@@ -75,10 +72,5 @@ public class MultipleChoiceExercise extends Exercise<MultipleChoiceExercise> {
         parent.setCenter(box);
 
         return parent;
-    }
-
-    @Override
-    public String toString() {
-        return question;
     }
 }

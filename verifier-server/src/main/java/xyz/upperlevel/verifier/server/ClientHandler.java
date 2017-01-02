@@ -4,7 +4,8 @@ import io.netty.channel.Channel;
 import lombok.Getter;
 import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.proto.*;
-import xyz.upperlevel.verifier.server.assignments.Assignment;
+import xyz.upperlevel.verifier.server.assignments.AssignmentRequest;
+import xyz.upperlevel.verifier.server.assignments.AssignmentResponse;
 import xyz.upperlevel.verifier.server.assignments.exceptions.AlreadyCommittedException;
 import xyz.upperlevel.verifier.server.login.AuthData;
 
@@ -13,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.concurrent.locks.StampedLock;
 
 public class ClientHandler {
@@ -22,7 +24,7 @@ public class ClientHandler {
     public AuthData data = null;
     public StampedLock authLock = new StampedLock();
 
-    private Assignment sent = null;
+    private AssignmentRequest sent = null;
 
     public ClientHandler(Channel channel) {
         this.channel = channel;
@@ -56,7 +58,12 @@ public class ClientHandler {
             log("Commited assignment");
             long stamp = authLock.readLock();
             try {
-                Main.getAssignmentManager().commit(data, new Assignment(packet));
+                AssignmentRequest curr = Main.currentAssignment();
+                if(sent == null || !sent.getId().equals(packet.getId())) {
+                    send(new ErrorPacket(ErrorType.ASSIGNMENT, "Bad assignment type!"));
+                } else {
+                    Main.getAssignmentManager().commit(data, new AssignmentResponse(packet, sent, new Random(data.toSeed())));
+                }
             } finally {
                 authLock.unlockRead(stamp);
             }
@@ -116,11 +123,11 @@ public class ClientHandler {
     }
 
     public void sendAssignment() {
-        Assignment current = Main.currentAssignment();
-        if(current != null)
-            send(Main.currentAssignment().getPacket());
+        sent = Main.currentAssignment();
+        if(sent != null)
+            send(sent.getPacket(new Random(data.toSeed())));
         else
-            Main.getAssignmentManager().addListener(ass -> send(ass.getPacket()));
+            Main.getAssignmentManager().addListener(ass -> send((sent = ass).getPacket(new Random(data.toSeed()))));
     }
 
     private boolean checkLogged() {

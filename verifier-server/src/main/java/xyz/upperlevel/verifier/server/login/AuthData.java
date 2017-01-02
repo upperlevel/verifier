@@ -60,4 +60,8 @@ public class AuthData {
             return -1;
         else return 0;
     }
+
+    public long toSeed() {
+        return ((long) clazz.hashCode()) * username.hashCode();
+    }
 }
