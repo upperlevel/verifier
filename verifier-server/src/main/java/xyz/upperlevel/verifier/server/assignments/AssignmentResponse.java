@@ -10,6 +10,7 @@ import xyz.upperlevel.verifier.proto.AssignmentPacket;
 import xyz.upperlevel.verifier.proto.ExerciseData;
 import xyz.upperlevel.verifier.server.Main;
 
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -22,14 +23,21 @@ public class AssignmentResponse {
     @Getter
     private final String id;
 
-    public AssignmentResponse(List<ExerciseResponse<?, ?>> exercises, String id) {
+    private final LocalTime commitTime;
+    private final LocalTime endTime;
+
+    public AssignmentResponse(List<ExerciseResponse<?, ?>> exercises, String id, LocalTime commitTime, LocalTime endTime) {
         this.exercises = exercises;
         this.id = id;
+        this.commitTime = commitTime;
+        this.endTime = endTime;
     }
 
     @SuppressWarnings("unchecked")
     public AssignmentResponse(AssignmentPacket packet, AssignmentRequest req, Random random) {
         this.id = packet.getId();
+        this.commitTime = LocalTime.now();
+        this.endTime = req.getEndTime();
 
         int[] mapping = IntStream.range(0, packet.getExercises().size()).toArray();
         Collections.shuffle(Arrays.asList(mapping), random);
@@ -56,7 +64,7 @@ public class AssignmentResponse {
         final AtomicInteger points = new AtomicInteger(0);
         final AtomicInteger max = new AtomicInteger(0);
 
-        HashMap<String, Object> map = new HashMap<>(2);
+        HashMap<String, Object> map = new LinkedHashMap<>(4);
         map.put(
                 "exercises",
                 exercises.stream()
@@ -74,7 +82,10 @@ public class AssignmentResponse {
                         .collect(Collectors.toList())
         );
 
-        map.put("res", new Fraction(points.get(), max.get()));
+        map.put("commit_time", commitTime);
+        if(endTime != null)
+            map.put("expire_time", endTime);
+        map.put("result", new Fraction(points.get(), max.get()));
 
         return map;
     }

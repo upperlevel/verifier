@@ -34,6 +34,10 @@ public class ConnectionHandler implements Connection {
                 ExerciseTypePacket.class,
                 p -> listener.onExerciseType(p.getName(), p.getFileData())
         );
+        executor.register(
+                TimePacket.class,
+                p -> listener.onTime(p.getType(), p.getTime())
+        );
     }
 
     @Override
@@ -66,5 +70,10 @@ public class ConnectionHandler implements Connection {
     public ConnectionHandler setListener(PacketListener listener) {
         this.listener = listener;
         return this;
+    }
+
+    @Override
+    public void sendTimeRequest() {
+        client.getChannel().writeAndFlush(new TimePacket(TimePacket.PacketType.REQUEST, null));
     }
 }

@@ -1,4 +1,4 @@
-package xyz.upperlevel.verifier.server.assignments.converters.fraction;
+package xyz.upperlevel.verifier.server.assignments.converters.yaml;
 
 import org.yaml.snakeyaml.constructor.AbstractConstruct;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -7,9 +7,12 @@ import org.yaml.snakeyaml.nodes.ScalarNode;
 import org.yaml.snakeyaml.nodes.Tag;
 import xyz.upperlevel.verifier.exercises.util.Fraction;
 
-public class FractionConstructor extends Constructor{
-    public FractionConstructor() {
+import java.time.LocalTime;
+
+public class CustomConstructor extends Constructor{
+    public CustomConstructor() {
         yamlConstructors.put(new Tag("!fraction"), new FractionConstruct());
+        yamlConstructors.put(new Tag("!localtime"), new LocalTimeConstruct());
     }
 
     private class FractionConstruct extends AbstractConstruct {
@@ -24,6 +27,14 @@ public class FractionConstructor extends Constructor{
                 );
             else
                 return new Fraction(Integer.parseInt(str));
+        }
+    }
+
+    private class LocalTimeConstruct extends AbstractConstruct {
+        @Override
+        public Object construct(Node node) {
+            String str = (String) constructScalar((ScalarNode) node);
+            return LocalTime.parse(str);
         }
     }
 }

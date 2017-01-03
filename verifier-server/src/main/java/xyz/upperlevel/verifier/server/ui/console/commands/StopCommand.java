@@ -1,13 +1,13 @@
 package xyz.upperlevel.verifier.server.ui.console.commands;
 
-import xyz.upperlevel.commandapi.CommandRunner;
 import xyz.upperlevel.commandapi.commands.Command;
+import xyz.upperlevel.commandapi.executor.CommandRunner;
 import xyz.upperlevel.verifier.server.Main;
 import xyz.upperlevel.verifier.server.ui.console.ConsoleUI;
 
 public class StopCommand extends Command {
     public StopCommand() {
-        super("stop");
+        super("stop", "shuts down the server");
     }
 
     @CommandRunner
@@ -17,7 +17,7 @@ public class StopCommand extends Command {
         try {
             Main.getServer().shutdown();
         } catch (Exception e) {
-            System.err.println("Exception caught when shutdowning the sercer");
+            System.err.println("Exception caught when shutdowning the server");
             e.printStackTrace();
         }
     }

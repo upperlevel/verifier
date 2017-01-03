@@ -4,7 +4,7 @@ This has a lot things to implement before the first version in relased
 ## TODO:
  - [ ] Server GUI
  - [ ] Assignment builder
- - [ ] Time
+ - [x] Time
  - [ ] ask help
  - [ ] bug report
  - [x] exercise randomization (based on user and exercise)

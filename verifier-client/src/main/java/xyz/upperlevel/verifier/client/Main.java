@@ -12,8 +12,10 @@ import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.exercises.ExerciseTypeManager;
 import xyz.upperlevel.verifier.proto.ErrorType;
 import xyz.upperlevel.verifier.proto.ExerciseData;
+import xyz.upperlevel.verifier.proto.TimePacket;
 
 import java.io.IOException;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -26,6 +28,8 @@ public class Main implements PacketListener{
     private final Connection conn = new ConnectionHandler();
     private final UI ui = new SimpleGUI();
     private final ExerciseTypeManager exerciseManager = new ExerciseTypeManager();
+
+    private AssignmentRequest request;
 
     private State state = State.INIT;
 
@@ -93,6 +97,18 @@ public class Main implements PacketListener{
         }
     }
 
+    public static void requestTime() {
+        getConnection().sendTimeRequest();
+    }
+
+    @Override
+    public void onTime(TimePacket.PacketType type, LocalTime time) {
+        System.out.println("Received Time packet");
+        if(type == TimePacket.PacketType.SET)
+            request.setEndTime(time);
+        else conn.sendError(ErrorType.BAD_PROTOCOL, "Unhandled time packet sent: " + type.name());
+    }
+
     @Override
     public void onAsignment(String id, List<ExerciseData> exercises) {
         System.out.println("Received assignment data, parsing");
@@ -116,6 +132,7 @@ public class Main implements PacketListener{
                                     .collect(Collectors.toList())
                     );
                     state = State.ASSIGNMENT_EXECUTING;
+                    request = assignment;
                     callback.accept(assignment);
                 }
         );

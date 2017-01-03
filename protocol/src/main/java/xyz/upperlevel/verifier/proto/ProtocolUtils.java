@@ -9,7 +9,8 @@ public class ProtocolUtils {
                 AssignmentPacket.HANDLER,
                 ErrorPacket.HANDLER,
                 LoginPacket.HANDLER,
-                ExerciseTypePacket.HANDLER
+                ExerciseTypePacket.HANDLER,
+                TimePacket.HANDLER
         );
     }
 }

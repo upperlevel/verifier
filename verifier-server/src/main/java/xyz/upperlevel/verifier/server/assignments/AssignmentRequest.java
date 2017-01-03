@@ -8,6 +8,7 @@ import xyz.upperlevel.verifier.proto.AssignmentPacket;
 import xyz.upperlevel.verifier.proto.ExerciseData;
 import xyz.upperlevel.verifier.server.Main;
 
+import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -19,9 +20,13 @@ public class AssignmentRequest {
     @Getter
     private final String id;
 
+    @Getter
+    private LocalTime endTime = null;
+
     public AssignmentRequest(List<ExerciseRequest<?, ?>> exercises, String id) {
         this.exercises = exercises;
         this.id = id;
+        this.endTime = endTime;
     }
 
     public AssignmentPacket getPacket(Random random) {
@@ -46,6 +51,14 @@ public class AssignmentRequest {
 
     public AssignmentRequest(Map<String, Object> load, String id) {
         this(parse(load), id);
+    }
+
+    public void setTime(LocalTime time) {
+        TimeSyncUtil.setTime(time);
+    }
+
+    public void setTimeUnsafe(LocalTime time) {
+        this.endTime = time;
     }
 
     @SuppressWarnings("unchecked")

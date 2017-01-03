@@ -1,10 +1,7 @@
 package xyz.upperlevel.verifier.server;
 
 import io.netty.channel.ChannelHandlerContext;
-import xyz.upperlevel.verifier.proto.AssignmentPacket;
-import xyz.upperlevel.verifier.proto.ErrorPacket;
-import xyz.upperlevel.verifier.proto.ExerciseTypePacket;
-import xyz.upperlevel.verifier.proto.LoginPacket;
+import xyz.upperlevel.verifier.proto.*;
 
 import static xyz.upperlevel.verifier.server.Main.handlers;
 
@@ -35,6 +32,11 @@ public class ConnListener {
     public void onLogin(ChannelHandlerContext context, LoginPacket packet) {
         log("Login");
         handlers().get(context.channel()).onLogin(packet);
+    }
+
+    public void onTime(ChannelHandlerContext context, TimePacket packet) {
+        log("Time");
+        handlers().get(context.channel()).onTime(packet);
     }
 
     private void log(String s) {

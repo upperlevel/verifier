@@ -1,8 +1,6 @@
 package xyz.upperlevel.verifier.client.gui;
 
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -15,6 +13,7 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.AnchorPane;
 import javafx.util.Callback;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import xyz.upperlevel.verifier.client.CustomTimer;
 import xyz.upperlevel.verifier.client.Main;
 import xyz.upperlevel.verifier.client.assignments.AssignmentRequest;
 import xyz.upperlevel.verifier.client.assignments.AssignmentResponse;
@@ -24,11 +23,16 @@ import xyz.upperlevel.verifier.exercises.ExerciseResponse;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.net.URL;
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.Objects;
 import java.util.ResourceBundle;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class AssignmentGUIController implements Initializable {
+    private static final String timeStr = "%1$dh %2$02dm %3$02ds";
+
     @FXML
     public ListView<ExerciseResponse> exercises_view;
 
@@ -56,12 +60,12 @@ public class AssignmentGUIController implements Initializable {
 
     private int index = 1;
 
-    private DoubleProperty property;
-
     @FXML
     private ObservableList<ExerciseResponse> exercises;
 
     private AssignmentRequest request;
+
+    private CustomTimer timer = new CustomTimer(this::updateTimeStr);
 
     public void init(AssignmentRequest request) {
         init(request, FXCollections.observableList(request.getExercises().stream().map(ExerciseRequest::getResponse).collect(Collectors.toList())));
@@ -81,6 +85,13 @@ public class AssignmentGUIController implements Initializable {
 
         left_status.setText("");
         right_status.setText("");
+
+        request.timeListener = ((newValue) -> {
+            System.out.println("time changed: " + newValue);
+            updateTimer(newValue);
+        });
+        updateTimer(request.getEndTime());
+        System.out.println("Set time listener");
     }
 
     @FXML
@@ -132,7 +143,7 @@ public class AssignmentGUIController implements Initializable {
 
     @FXML
     public void onRequestTime() {
-        throw new NotImplementedException();
+        Main.requestTime();
     }
 
     @FXML
@@ -199,14 +210,35 @@ public class AssignmentGUIController implements Initializable {
         }
     }
 
-    @Override public void initialize(URL location, ResourceBundle resources) {
+    public void updateTimeStr() {
+        final String time = getTimeStr();
+        Platform.runLater(() -> ex_time.setText(time));
+    }
+
+    public void updateTimer(LocalTime newValue) {
+        boolean hasTime = newValue != null;
+
+        if(hasTime && !timer.isRunning()) {
+            timer.start(1, TimeUnit.SECONDS);
+            updateTimeStr();
+        } else if(!hasTime && timer.isRunning()) {
+            timer.stop();
+            updateTimeStr();
+        }
+    }
+
+    public String getTimeStr(){
+        LocalTime endTime = request.getEndTime();
+        if(endTime !=  null) {
+            Duration duration = Duration.between(LocalTime.now(), endTime);
+            return String.format(timeStr, duration.toHours(), duration.toMinutes() % 60, duration.getSeconds() % 60);
+        } else return "";
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
         ((SimpleGUI)Main.getUI()).onWinLoad.run();
-        exercises_view.getSelectionModel().selectedIndexProperty().addListener(new ChangeListener<Number>() {
-            @Override
-            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                updateIndex(newValue.intValue() + 1);
-            }
-        });
+        exercises_view.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> updateIndex(newValue.intValue() + 1));
     }
 
     private static class CustomCellFactory implements Callback<ListView<ExerciseResponse>, ListCell<ExerciseResponse>> {

@@ -2,8 +2,8 @@ package xyz.upperlevel.verifier.server.assignments.converters;
 
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Tag;
-import xyz.upperlevel.verifier.server.assignments.converters.fraction.FractionConstructor;
-import xyz.upperlevel.verifier.server.assignments.converters.fraction.FractionRepresenter;
+import xyz.upperlevel.verifier.server.assignments.converters.yaml.CustomConstructor;
+import xyz.upperlevel.verifier.server.assignments.converters.yaml.CustomRepresenter;
 
 import java.io.File;
 import java.io.FileReader;
@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 public class YamlAssignmentConverter implements AssignmentConverter {
-    private final Yaml yaml = new Yaml(new FractionConstructor(), new FractionRepresenter());
+    private final Yaml yaml = new Yaml(new CustomConstructor(), new CustomRepresenter());
 
     public YamlAssignmentConverter() {
         yaml.addImplicitResolver(new Tag("!fraction"), Pattern.compile("\\d+/\\d+|\\d+"), "0123456789");

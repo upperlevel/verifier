@@ -43,8 +43,8 @@ public class MultipleChoiceExerciseTest extends TestCase {
             );
         }
         {
-            System.out.println("Sent: " + request.choices);
-            System.out.println("Received: " + received.choices);
+            /*System.out.println("Sent: " + request.choices);
+            System.out.println("Received: " + received.choices);*/
             Set<String> chosen = new HashSet<>(Arrays.asList(request.choices.get(1), request.choices.get(3)));
 
             MultipleChoiceExerciseResponse exercise = new MultipleChoiceExerciseResponse(handler, request);
@@ -53,12 +53,12 @@ public class MultipleChoiceExerciseTest extends TestCase {
                     .map(o -> received.choices.indexOf(o))
                     .collect(Collectors.toSet());
 
-            System.out.println("chosen: " + chosen + " -> " + exercise.answers);
+            //System.out.println("chosen: " + chosen + " -> " + exercise.answers);
 
             {
                 MultipleChoiceExerciseResponse exe = handler.decodeResponse(handler.encodeResponse(exercise).getData(), request, new Random(seed));
 
-                System.out.println("server->" + exe.answers + "->" + exe.answers.stream().map(i -> request.choices.get(i)).collect(Collectors.toList()));
+                //System.out.println("server->" + exe.answers + "->" + exe.answers.stream().map(i -> request.choices.get(i)).collect(Collectors.toList()));
 
                 assertEquals(exercise.answers.size(), exe.answers.size());//Just for a litle bit more debugging, lol
                 //Do NOT compare the raw answers (numbers) but the choices associated with them

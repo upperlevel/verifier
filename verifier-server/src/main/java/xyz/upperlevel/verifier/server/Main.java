@@ -74,6 +74,7 @@ public class Main {
         exe.register(ErrorPacket.class, listener::onError);
         exe.register(ExerciseTypePacket.class, listener::onExeRequest);
         exe.register(LoginPacket.class, listener::onLogin);
+        exe.register(TimePacket.class, listener::onTime);
     }
 
     public static ClientManager handlers() {

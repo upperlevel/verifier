@@ -31,10 +31,6 @@ public class AssignmentGUI extends Application {
     @Getter
     private Scene scene;
 
-    static {
-
-    }
-
     public AssignmentGUI() {
         if(instance == null)
             instance = this;

@@ -1,6 +1,9 @@
 package xyz.upperlevel.verifier.packetlib.utils;
 
+import javax.swing.*;
+import java.io.Console;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -57,5 +60,29 @@ public class ByteSecurityUtil {
             res[mapping.get(i)] = in[i];
         for(int i = 0; i < mapping.size(); i++)
             in[i] = (T) res[i];
+    }
+
+    public static char[] askPassword() {
+        Console console = System.console();
+        if(console == null) {
+            System.out.println("Console not found, using java.swing");
+            JPasswordField pf = new JPasswordField();
+            int okCxl = JOptionPane.showConfirmDialog(null, pf, "Enter Password", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+            if (okCxl != JOptionPane.OK_OPTION)
+                return null;
+            return pf.getPassword();
+        } else {
+            char[] password = console.readPassword("Enter Password:");
+            char[] pssw2 = console.readPassword("Repeat Password:");
+
+            if (!Arrays.equals(password, pssw2)) {
+                System.out.println("The two password do NOT match!");
+                return null;
+            }
+
+            zero(pssw2);
+            return password;
+        }
     }
 }

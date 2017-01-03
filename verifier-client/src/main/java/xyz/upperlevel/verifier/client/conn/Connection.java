@@ -22,4 +22,6 @@ public interface Connection {
     public void sendError(ErrorType type, String error);
 
     Connection setListener(PacketListener listener);
+
+    void sendTimeRequest();
 }

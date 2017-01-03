@@ -6,6 +6,7 @@ import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.proto.*;
 import xyz.upperlevel.verifier.server.assignments.AssignmentRequest;
 import xyz.upperlevel.verifier.server.assignments.AssignmentResponse;
+import xyz.upperlevel.verifier.server.assignments.TimeSyncUtil;
 import xyz.upperlevel.verifier.server.assignments.exceptions.AlreadyCommittedException;
 import xyz.upperlevel.verifier.server.login.AuthData;
 
@@ -24,6 +25,7 @@ public class ClientHandler {
     public AuthData data = null;
     public StampedLock authLock = new StampedLock();
 
+    @Getter
     private AssignmentRequest sent = null;
 
     public ClientHandler(Channel channel) {
@@ -122,12 +124,41 @@ public class ClientHandler {
         }
     }
 
+    public void sendTime() {
+        StampedLock lock = TimeSyncUtil.lock;
+        long stamp = lock.readLock();
+        try {
+            TimePacket packet = TimeSyncUtil.getPacket();
+            if(packet == null)
+                return;
+            send(packet);
+        } finally {
+            lock.unlockRead(stamp);
+        }
+    }
+
+    public void onTime(TimePacket packet) {
+        if(packet.getType() == TimePacket.PacketType.REQUEST) {
+            log("Request time! -> " + TimeSyncUtil.requireTime(data));
+        } else if(packet.getType() == TimePacket.PacketType.REQUEST) {
+            log("Packet error: client sent a SET time packet!");
+            send(new ErrorPacket(ErrorType.BAD_PROTOCOL, "The client can't send a SET time packet"));
+        } else {
+            log("Packet error: Time packet not implemented yet: " + packet.getType().name());
+            send(new ErrorPacket(ErrorType.BAD_PROTOCOL, "Time packet " + packet.getType().name() + " not implemented!"));
+        }
+    }
+
     public void sendAssignment() {
         sent = Main.currentAssignment();
-        if(sent != null)
+        if(sent != null) {
             send(sent.getPacket(new Random(data.toSeed())));
-        else
-            Main.getAssignmentManager().addListener(ass -> send((sent = ass).getPacket(new Random(data.toSeed()))));
+            sendTime();
+        } else
+            Main.getAssignmentManager().addListener(ass ->  {
+                send((sent = ass).getPacket(new Random(data.toSeed())));
+                sendTime();
+            });
     }
 
     private boolean checkLogged() {

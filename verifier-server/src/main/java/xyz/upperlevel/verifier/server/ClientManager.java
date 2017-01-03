@@ -2,6 +2,7 @@ package xyz.upperlevel.verifier.server;
 
 import io.netty.channel.Channel;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,5 +29,9 @@ public class ClientManager {
 
     public ClientHandler get(Channel channel) {
         return clients.get(channel);
+    }
+
+    public Collection<ClientHandler> getAll() {
+        return clients.values();
     }
 }

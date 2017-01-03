@@ -1,7 +1,7 @@
 package xyz.upperlevel.verifier.proto;
 
 public enum ErrorType {
-    LOGIN_BAD_USER, LOGIN_BAD_PASSWORD, ASSIGNMENT, TEST_TYPE, MISC, NOT_LOGGED_ID;
+    LOGIN_BAD_USER, LOGIN_BAD_PASSWORD, ASSIGNMENT, TEST_TYPE, MISC, NOT_LOGGED_ID, BAD_PROTOCOL;
 
     private final static ErrorType[] types = values();
 
