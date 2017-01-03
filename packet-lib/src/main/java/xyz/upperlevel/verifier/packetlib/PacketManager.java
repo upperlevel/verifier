@@ -224,7 +224,7 @@ public class PacketManager {
             PacketHandler<?> handler = class_mapped.get(in.getClass());
             if(handler != null) {
                 out.add(new AnyPacket(handler.getId(), ((PacketHandler) handler).encode(in)));
-                System.out.println("Sending " + handler.getId());
+                //System.out.println("Sending " + handler.getId());
             } else
                 System.out.println("WARN: PacketEncoder-> unknown packet received (class:" + in.getClass().getName() + "):" + class_mapped.keySet());
         }
@@ -236,7 +236,7 @@ public class PacketManager {
         protected void decode(ChannelHandlerContext channelHandlerContext, AnyPacket in, List<Object> out) throws Exception {
             PacketHandler<?> handler = id_mapped.get(in.getType() - minId);
             if(handler != null) {
-                System.out.println("Received " + handler.getId());
+                //System.out.println("Received " + handler.getId());
                 out.add(handler.decode(in.getData()));
             } else
                 System.out.println("WARN: PacketDecoder-> unknown packet received: (id:" + (in.getType() - minId) + ")");
