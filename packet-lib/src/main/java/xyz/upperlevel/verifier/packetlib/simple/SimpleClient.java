@@ -1,6 +1,7 @@
 package xyz.upperlevel.verifier.packetlib.simple;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
@@ -13,6 +14,7 @@ import xyz.upperlevel.verifier.packetlib.PacketManager;
 import xyz.upperlevel.verifier.packetlib.SimpleConnectionOptions;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class SimpleClient {
     @Getter
@@ -31,9 +33,9 @@ public class SimpleClient {
     @Getter
     private final PacketExecutorManager executorManager;
 
-    private final SslHandler ssl;
+    private final Function<SocketChannel, SslHandler> ssl;
 
-    public SimpleClient(String host, int port, int threadsNumber, SimpleConnectionOptions connOptions, SslHandler ssl) {
+    public SimpleClient(String host, int port, int threadsNumber, SimpleConnectionOptions connOptions, Function<SocketChannel, SslHandler> ssl) {
         this.port = port;
         this.host = host;
         packetManager = new PacketManager(PacketManager.SideType.CLIENT, connOptions);
@@ -61,7 +63,7 @@ public class SimpleClient {
                         ChannelPipeline pipeline = channel.pipeline();
 
                         if(ssl != null)
-                            pipeline.addLast(ssl);
+                            pipeline.addLast(ssl.apply(channel));
                         packetManager.initializer.setup(channel);
                         pipeline.addLast("handler", executorManager.createCaller());
                     }
@@ -94,12 +96,20 @@ public class SimpleClient {
 
         public final int threadNumber;
         public final SimpleConnectionOptions connectionOptions;
-        public final SslHandler ssl;
+        public final Function<SocketChannel, SslHandler> ssl;
 
         public static class SimpleClientOptionsBuilder {
             private int threadNumber = 0;
             private SimpleConnectionOptions connectionOptions = SimpleConnectionOptions.DEFAULT;
-            public SslHandler ssl = null;
+            private Function<SocketChannel, SslHandler> ssl = null;
+
+            public SimpleClientOptionsBuilder sslBB(Function<ByteBufAllocator, SslHandler> ssl) {
+                if(ssl == null)
+                    this.ssl = null;
+                else
+                    this.ssl = channel -> ssl.apply(channel.alloc());
+                return this;
+            }
         }
     }
 }

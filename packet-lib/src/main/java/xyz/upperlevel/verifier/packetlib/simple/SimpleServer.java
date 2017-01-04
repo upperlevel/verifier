@@ -1,6 +1,7 @@
 package xyz.upperlevel.verifier.packetlib.simple;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -15,6 +16,8 @@ import lombok.Getter;
 import xyz.upperlevel.verifier.packetlib.PacketManager;
 import xyz.upperlevel.verifier.packetlib.SimpleConnectionOptions;
 
+import java.util.function.Function;
+
 public class SimpleServer {
     @Getter
     private final int port;
@@ -23,7 +26,7 @@ public class SimpleServer {
     @Getter
     private final PacketExecutorManager executorManager;
     @Getter
-    private final SslHandler ssl;
+    private final Function<SocketChannel, SslHandler> ssl;
 
     private final int bossThreadNubmer, workerThreadNumber;
 
@@ -31,7 +34,7 @@ public class SimpleServer {
 
     private ChannelFuture channel;
 
-    public SimpleServer(int port, int bossThreadNumber, int workerThreadNumber, SimpleConnectionOptions options, SslHandler ssl) {
+    public SimpleServer(int port, int bossThreadNumber, int workerThreadNumber, SimpleConnectionOptions options, Function<SocketChannel, SslHandler> ssl) {
         this.port = port;
         packetManager = new PacketManager(PacketManager.SideType.SERVER, options);
         this.ssl = ssl;
@@ -59,7 +62,7 @@ public class SimpleServer {
                         @Override protected void initChannel(SocketChannel channel) throws Exception {
                             ChannelPipeline pipeline = channel.pipeline();
                             if(ssl != null)
-                                pipeline.addLast("ssl", ssl);
+                                pipeline.addLast("ssl", ssl.apply(channel));
 
                             packetManager.initializer.setup(channel);
                             pipeline.addLast("handler", executorManager.createCaller());
@@ -100,13 +103,21 @@ public class SimpleServer {
         public final int bossThreadNumber;
         public final int workerThreadNumber;
         public final SimpleConnectionOptions connectionOptions;
-        public final SslHandler ssl;
+        public final Function<SocketChannel, SslHandler> ssl;
 
         public static class SimpleServerOptionsBuilder {
             private int bossThreadNumber = 0;
             private int workerThreadNumber = 1;
             private SimpleConnectionOptions connectionOptions = SimpleConnectionOptions.DEFAULT;
-            public SslHandler ssl = null;
+            private Function<SocketChannel, SslHandler> ssl = null;
+
+            public SimpleServerOptionsBuilder sslBB(Function<ByteBufAllocator, SslHandler> ssl) {
+                if(ssl == null)
+                    this.ssl = null;
+                else
+                    this.ssl = channel -> ssl.apply(channel.alloc());
+                return this;
+            }
         }
     }
 }
