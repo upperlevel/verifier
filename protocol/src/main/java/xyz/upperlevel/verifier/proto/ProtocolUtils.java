@@ -11,7 +11,7 @@ import java.io.File;
 import java.util.function.Function;
 
 public class ProtocolUtils {
-    private static final boolean SSL_ENABLED = true;
+    private static final boolean SSL_ENABLED = false;
 
     public static void registerDefPackets(PacketManager manager) {
         manager.register(
