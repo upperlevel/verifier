@@ -14,7 +14,13 @@ public class ConnectionHandler implements Connection {
 
     @Override
     public void init(String ip, int port) throws Exception{
-        client = new SimpleClient(ip, port);
+        client = new SimpleClient(
+                ip,
+                port,
+                SimpleClient.SimpleClientOptions.builder()
+                        .sslBB(ProtocolUtils.getSslClient())
+                        .build()
+        );
         ProtocolUtils.registerDefPackets(client.getPacketManager());
         registerExecutor();
         client.start();

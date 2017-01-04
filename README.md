@@ -11,8 +11,7 @@ This has a lot things to implement before the first version in relased
  - [ ] more exercise types
  - [x] order-free names
  - [x] exercise pre-correction (and make sure to send the answers, lol)
- - [ ] Config system
- - [ ] Tls security integration (with config)
+ - [x] Tls security integration
 
 ## Simple server tutorial
 Even if this has a lot of things that need to be implemented, it's still working, so here's a little tutorial in how to make it work:<br>

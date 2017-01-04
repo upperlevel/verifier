@@ -1,17 +1,22 @@
 package xyz.upperlevel.verifier.packetlib.simple;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.ssl.SslHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import xyz.upperlevel.verifier.packetlib.PacketManager;
 import xyz.upperlevel.verifier.packetlib.SimpleConnectionOptions;
+
+import java.util.function.Function;
 
 public class SimpleServer {
     @Getter
@@ -20,22 +25,26 @@ public class SimpleServer {
     private final PacketManager packetManager;
     @Getter
     private final PacketExecutorManager executorManager;
+    @Getter
+    private final Function<SocketChannel, SslHandler> ssl;
+
     private final int bossThreadNubmer, workerThreadNumber;
 
     private EventLoopGroup bossGroup, workerGroup;
 
     private ChannelFuture channel;
 
-    public SimpleServer(int port, int bossThreadNumber, int workerThreadNumber, SimpleConnectionOptions options) {
+    public SimpleServer(int port, int bossThreadNumber, int workerThreadNumber, SimpleConnectionOptions options, Function<SocketChannel, SslHandler> ssl) {
         this.port = port;
         packetManager = new PacketManager(PacketManager.SideType.SERVER, options);
+        this.ssl = ssl;
         executorManager = new PacketExecutorManager(packetManager);
         this.bossThreadNubmer = bossThreadNumber;
         this.workerThreadNumber = workerThreadNumber;
     }
 
     public SimpleServer(int port, SimpleServerOptions options) {
-        this(port, options.bossThreadNumber, options.workerThreadNumber, options.connectionOptions);
+        this(port, options.bossThreadNumber, options.workerThreadNumber, options.connectionOptions, options.ssl);
     }
 
     public SimpleServer(int port) {
@@ -51,8 +60,12 @@ public class SimpleServer {
                     .channel(NioServerSocketChannel.class)
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override protected void initChannel(SocketChannel channel) throws Exception {
+                            ChannelPipeline pipeline = channel.pipeline();
+                            if(ssl != null)
+                                pipeline.addLast("ssl", ssl.apply(channel));
+
                             packetManager.initializer.setup(channel);
-                            channel.pipeline().addLast("handler", executorManager.createCaller());
+                            pipeline.addLast("handler", executorManager.createCaller());
                         }
                     });
 
@@ -83,18 +96,28 @@ public class SimpleServer {
     }
 
     @AllArgsConstructor
-    @Builder()
+    @Builder
     public static class SimpleServerOptions {
         public static final SimpleServerOptions DEFAULT = builder().build();
 
         public final int bossThreadNumber;
         public final int workerThreadNumber;
         public final SimpleConnectionOptions connectionOptions;
+        public final Function<SocketChannel, SslHandler> ssl;
 
         public static class SimpleServerOptionsBuilder {
             private int bossThreadNumber = 0;
             private int workerThreadNumber = 1;
             private SimpleConnectionOptions connectionOptions = SimpleConnectionOptions.DEFAULT;
+            private Function<SocketChannel, SslHandler> ssl = null;
+
+            public SimpleServerOptionsBuilder sslBB(Function<ByteBufAllocator, SslHandler> ssl) {
+                if(ssl == null)
+                    this.ssl = null;
+                else
+                    this.ssl = channel -> ssl.apply(channel.alloc());
+                return this;
+            }
         }
     }
 }
