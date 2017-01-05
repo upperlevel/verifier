@@ -67,6 +67,7 @@
          try {
              Map<Set<String>, AuthData> clzz = users.computeIfAbsent(clazz, (a) -> new HashMap<>());
              AuthData data = new AuthData(clazz, userame, password);
+             nonMapped.add(data);
              return clzz.putIfAbsent(data.getUsername(), data) == null;
          } finally {
              lock.unlockWrite(stamp);
@@ -82,6 +83,7 @@
                      .collect(Collectors.toList());
 
              users.clear();
+             nonMapped.clear();
              registerFromFiles();
 
              for (AuthData data : oldUsers) {

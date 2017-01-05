@@ -59,7 +59,11 @@ public class AssignmentGUI extends Application {
         loader.setController(this.controller = new AssignmentGUIController());
         Parent root = loader.load(fxml.openStream());
         scene = new Scene(root);
-        stage.setOnCloseRequest(event -> this.controller.onClose());
+        stage.setOnCloseRequest(event -> {
+            this.controller.onClose();
+            event.consume();
+        });
+        stage.showingProperty().addListener((observable, oldValue, newValue) -> new Exception().printStackTrace());
         stage.setScene(scene);
         stage.setTitle(TITLE);
     }

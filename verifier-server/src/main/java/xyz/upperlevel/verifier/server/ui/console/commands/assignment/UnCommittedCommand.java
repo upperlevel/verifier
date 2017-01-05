@@ -18,11 +18,15 @@ public class UnCommittedCommand extends Command {
 
     @CommandRunner
     public void run() {
+        if(Main.currentAssignment() == null) {
+            System.out.println("No assignment loaded");
+            return;
+        }
         System.out.println("Checking users");
         AssignmentManager manager = Main.getAssignmentManager();
         getUserThat(
                 d -> !manager.hasCurrentAssignment(d),
-                d -> System.out.println("-" + d.getClazz() + "->" + d.getUsername())
+                d -> System.out.println("-" + d.getClazz() + "->" + String.join(" ", d.getUsername()))
         );
     }
 }

@@ -18,11 +18,15 @@ public class CommittedCommand extends Command {
 
     @CommandRunner
     public void run() {
+        if(Main.currentAssignment() == null) {
+            System.out.println("No assignment loaded");
+            return;
+        }
         System.out.println("Checking users");
         AssignmentManager manager = Main.getAssignmentManager();
         getUserThat(
                 manager::hasCurrentAssignment,
-                d -> System.out.println("-" + d.getClazz() + "->" + d.getUsername())
+                d -> System.out.println("-" + d.getClazz() + "->" + String.join(" ", d.getUsername()))
         );
     }
 

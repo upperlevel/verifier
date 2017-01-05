@@ -33,8 +33,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class AssignmentGUIController implements Initializable {
-    private static final String timeStr = "%1$dh %2$02dm %3$02ds";
-
     @FXML
     public ListView<ExerciseResponse> exercises_view;
 
@@ -201,22 +199,20 @@ public class AssignmentGUIController implements Initializable {
 
     public void updateIndex() {
         ex_number.setText("" + index);
-        ex_percentage.setText(((index*100)/exercises.size()) + "");
-        if(index == 1)
+        ex_percentage.setText(((index * 100) / exercises.size()) + "");
+        if (index == 1)
             prev_button.setDisable(true);
         else
             prev_button.setDisable(false);
 
-        if(index == exercises.size())
+        if (index == exercises.size())
             next_button.setDisable(true);
         else
             next_button.setDisable(false);
 
-        {
-            Parent p = exercises.get(index - 1).getGraphics();
-            ex_container.getChildren().setAll(p);
-            ex_container.setMinHeight(p.prefHeight(-1));
-        }
+        Parent p = exercises.get(index - 1).getGraphics();
+        ex_container.getChildren().setAll(p);
+
     }
 
     public void updateTimeStr() {

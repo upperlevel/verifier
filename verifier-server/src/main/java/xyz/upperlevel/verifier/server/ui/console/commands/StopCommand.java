@@ -20,5 +20,6 @@ public class StopCommand extends Command {
             System.err.println("Exception caught when shutdowning the server");
             e.printStackTrace();
         }
+        System.exit(0);
     }
 }
