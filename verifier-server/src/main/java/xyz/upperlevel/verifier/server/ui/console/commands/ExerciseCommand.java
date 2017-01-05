@@ -4,8 +4,7 @@ import xyz.upperlevel.commandapi.commands.NodeCommand;
 
 public class ExerciseCommand extends NodeCommand{
     public ExerciseCommand() {
-        super("exercises");
-        addAlias("exercise");
+        super("exercise");
         addAlias("exe");
 
         registerPackageRelative("exercise");
