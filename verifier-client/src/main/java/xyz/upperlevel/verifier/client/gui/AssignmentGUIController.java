@@ -11,6 +11,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.util.Callback;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import xyz.upperlevel.verifier.client.CustomTimer;
@@ -118,6 +120,7 @@ public class AssignmentGUIController implements Initializable {
         );
 
         if(response == 1) {
+            AssignmentGUI.getInstance().getStage().hide();
             Main.onSendAssignment(new AssignmentResponse(request, exercises));
             //Main should close itself
         }
@@ -142,7 +145,8 @@ public class AssignmentGUIController implements Initializable {
 
     protected void close0() {
         AssignmentGUI.getInstance().getStage().hide();
-        timer.stop();
+        if(timer != null)
+            timer.stop();
         Main.shutdown();
     }
 
@@ -216,8 +220,11 @@ public class AssignmentGUIController implements Initializable {
     }
 
     public void updateTimeStr() {
-        final String time = getTimeStr();
-        Platform.runLater(() -> ex_time.setText(time));
+        final ColoredText time = getTimeStr();
+        Platform.runLater(() -> {
+            ex_time.setText(time.text);
+            ex_time.setTextFill(time.color);
+        });
     }
 
     public void updateTimer(LocalTime newValue) {
@@ -232,18 +239,53 @@ public class AssignmentGUIController implements Initializable {
         }
     }
 
-    public String getTimeStr(){
+    private static final Color TIME_SAFE = Color.web("#3333ff");
+    private static final Color TIME_WARNING = Color.web("ff6600");
+    private static final Color TIME_EXPIRED = Color.web("#ff0000");
+
+    public ColoredText getTimeStr(){
         LocalTime endTime = request.getEndTime();
         if(endTime !=  null) {
             Duration duration = Duration.between(LocalTime.now(), endTime);
-            return String.format(timeStr, duration.toHours(), duration.toMinutes() % 60, duration.getSeconds() % 60);
-        } else return "";
+
+            String str;
+            Paint color = null;
+
+            if(duration.isNegative()) {
+                duration = duration.abs();
+                str = "-";
+                color = TIME_EXPIRED;
+            } else str = "";
+
+            final long hours = duration.toHours(),
+                    minutes = duration.toMinutes() % 60,
+                    seconds = duration.getSeconds() % 60;
+
+            if(hours > 0)
+                str += hours   + "h " + minutes + "m " + seconds + "s";
+            else if(minutes > 0)
+                str += minutes + "m " + seconds + "s";
+            else if(seconds > 0)
+                str += seconds + "s";
+
+            if(color == null) {
+                if (duration.toMinutes() < 5)
+                    color = TIME_WARNING;
+                else
+                    color = TIME_SAFE;
+            }
+
+
+
+            return new ColoredText(str, color);
+        } else return ColoredText.EMPTY;
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         ((SimpleGUI)Main.getUI()).onWinLoad.run();
         exercises_view.getSelectionModel().selectedIndexProperty().addListener((observable, oldValue, newValue) -> updateIndex(newValue.intValue() + 1));
+
     }
 
     private static class CustomCellFactory implements Callback<ListView<ExerciseResponse>, ListCell<ExerciseResponse>> {

@@ -66,7 +66,10 @@ public class AuthGUI {
             throw new RuntimeException("Cannot load The connection chooser fxml (" + FXML_PATH + ")", e);
         }
         stage = new Stage();
-        stage.setOnCloseRequest(event -> Main.shutdown());
+        stage.setOnCloseRequest(event -> {
+            stage.hide();
+            Main.shutdown();
+        });
         stage.initModality(Modality.APPLICATION_MODAL);
         //stage.initStyle(StageStyle.UNDECORATED);
         stage.initOwner(AssignmentGUI.getInstance().getStage().getOwner());
