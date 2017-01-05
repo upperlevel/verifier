@@ -13,21 +13,25 @@ public class SslClientContext {
     public static final SslContext CONTEXT;
 
     //This is inside of the class to make it a little bit harder to replace the certificate
-    private static final String CERT = "${cert_encoded}";
+    private static final String CERT = "";
 
     static {
         SslContext context;
 
-        X509Certificate certificate = decodeCer(CERT);
+        if("".equals(CERT))
+            context = null;
+        else {
+            X509Certificate certificate = decodeCer(CERT);
 
-        try {
-            context = SslContextBuilder
-                    .forClient()
-                    .trustManager(certificate)
-                    .build();
-        } catch (Exception e) {
-            throw new Error(
-                    "Failed to initialize the client-side SSLContext", e);
+            try {
+                context = SslContextBuilder
+                        .forClient()
+                        .trustManager(certificate)
+                        .build();
+            } catch (Exception e) {
+                throw new Error(
+                        "Failed to initialize the client-side SSLContext", e);
+            }
         }
 
         CONTEXT = context;

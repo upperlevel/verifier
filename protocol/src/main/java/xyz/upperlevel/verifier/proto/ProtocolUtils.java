@@ -1,6 +1,7 @@
 package xyz.upperlevel.verifier.proto;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.SslHandler;
 import xyz.upperlevel.verifier.packetlib.PacketManager;
@@ -11,8 +12,6 @@ import java.io.File;
 import java.util.function.Function;
 
 public class ProtocolUtils {
-    private static final boolean SSL_ENABLED = false;
-
     public static void registerDefPackets(PacketManager manager) {
         manager.register(
                 AssignmentPacket.HANDLER,
@@ -24,9 +23,8 @@ public class ProtocolUtils {
     }
 
     public static Function<ByteBufAllocator, SslHandler> getSslClient() {
-        if (!SSL_ENABLED)
-            return null;
-        return SslClientContext.CONTEXT::newHandler;
+        SslContext context = SslClientContext.CONTEXT;
+        return context != null ? context::newHandler : null;
     }
 
     public static Function<ByteBufAllocator, SslHandler> getSslServer(File certPath, File keyPath, String keyPassw) throws SSLException {
