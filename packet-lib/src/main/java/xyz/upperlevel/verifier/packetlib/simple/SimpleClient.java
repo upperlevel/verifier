@@ -42,6 +42,9 @@ public class SimpleClient {
         this.threadsNumber = threadsNumber;
         this.ssl = ssl;
         executorManager = new PacketExecutorManager(packetManager);
+        group = new NioEventLoopGroup(threadsNumber, r -> {
+            return new Thread(r, "Client Thread");
+        });
     }
 
     public SimpleClient(String host, int port, SimpleClientOptions options) {
@@ -53,8 +56,6 @@ public class SimpleClient {
     }
 
     public void start() throws InterruptedException {
-        group = new NioEventLoopGroup(threadsNumber);
-
         Bootstrap bootstrap = new Bootstrap()
                 .group(group)
                 .channel(NioSocketChannel.class)
@@ -62,15 +63,20 @@ public class SimpleClient {
                     @Override protected void initChannel(SocketChannel channel) throws Exception {
                         ChannelPipeline pipeline = channel.pipeline();
 
-                        if(ssl != null)
+                        if (ssl != null)
                             pipeline.addLast(ssl.apply(channel));
                         packetManager.initializer.setup(channel);
                         pipeline.addLast("handler", executorManager.createCaller());
                     }
                 });
         final ChannelFuture future = bootstrap.connect(host, port);
-        future.await();
-        channel = future.sync().channel();
+        try {
+            future.await();
+            channel = future.sync().channel();
+        } catch (Exception e) {
+            group.shutdownGracefully();
+            throw e;
+        }
     }
 
     public <T> SimpleClient manage(Class<T> packetClazz, Consumer<T> callback) {
@@ -86,12 +92,18 @@ public class SimpleClient {
     public void shutdown() {
         if(group == null)
             throw new IllegalStateException("Client not initialized");
-        try {
-            channel.close().await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        if(channel != null) {
+            try {
+                channel.close().await();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
-        group.shutdownGracefully();
+        try {
+            group.shutdownGracefully().await();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Error closing The client ThreadGroup", e);
+        }
     }
 
     @AllArgsConstructor
