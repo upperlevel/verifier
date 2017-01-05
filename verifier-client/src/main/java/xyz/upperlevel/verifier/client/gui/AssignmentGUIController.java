@@ -67,6 +67,10 @@ public class AssignmentGUIController implements Initializable {
 
     private CustomTimer timer = new CustomTimer(this::updateTimeStr);
 
+    public AssignmentGUIController() {
+        Main.closeListener.add(timer::stop);
+    }
+
     public void init(AssignmentRequest request) {
         init(request, FXCollections.observableList(request.getExercises().stream().map(ExerciseRequest::getResponse).collect(Collectors.toList())));
     }
@@ -138,6 +142,7 @@ public class AssignmentGUIController implements Initializable {
 
     protected void close0() {
         AssignmentGUI.getInstance().getStage().hide();
+        timer.stop();
         Main.shutdown();
     }
 

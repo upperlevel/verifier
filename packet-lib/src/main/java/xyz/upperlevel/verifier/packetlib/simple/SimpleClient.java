@@ -86,6 +86,11 @@ public class SimpleClient {
     public void shutdown() {
         if(group == null)
             throw new IllegalStateException("Client not initialized");
+        try {
+            channel.close().await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         group.shutdownGracefully();
     }
 

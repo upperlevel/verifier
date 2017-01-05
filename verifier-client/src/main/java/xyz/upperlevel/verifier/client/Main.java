@@ -16,6 +16,7 @@ import xyz.upperlevel.verifier.proto.TimePacket;
 
 import java.io.IOException;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -32,6 +33,8 @@ public class Main implements PacketListener{
     private AssignmentRequest request;
 
     private State state = State.INIT;
+
+    public static List<Runnable> closeListener = new ArrayList<>();
 
     public static void main(String... args) {
         instance.start();
@@ -144,6 +147,8 @@ public class Main implements PacketListener{
         getConnection().shutdown();
         System.out.println("JavaFX process shutdown...");
         Platform.exit();
+        System.out.println("Calling close listeners");
+        closeListener.forEach(Runnable::run);
         System.out.println("Shutdown completed");
     }
 

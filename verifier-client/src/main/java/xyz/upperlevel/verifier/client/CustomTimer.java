@@ -13,7 +13,7 @@ public class CustomTimer {
     }
 
     public void start(long pause, TimeUnit unit) {
-        timer = new Timer();
+        timer = new Timer("Verifier timer");
         pause = unit.toMillis(pause);
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
@@ -24,8 +24,12 @@ public class CustomTimer {
     }
 
     public void stop() {
-        timer.cancel();
-        timer = null;
+        if(timer != null) {
+            timer.cancel();
+            timer.purge();
+            timer = null;
+            System.out.println("Timer closed");
+        }
     }
 
     public boolean isRunning() {
