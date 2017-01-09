@@ -5,22 +5,30 @@
 <?import javafx.scene.layout.*?>
 <VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
    <children>
-      <HBox>
+      <VBox spacing="5.0">
          <children>
             <HBox>
                <children>
                   <Label text="Host:" />
-                  <TextField fx:id="host_field" />
+                  <TextField fx:id="host_field" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets left="10.0" right="10.0" />
+                     </HBox.margin>
+                  </TextField>
                </children>
             </HBox>
             <HBox>
                <children>
-                  <Label text=":" />
-                  <TextField fx:id="port_field" prefHeight="25.0" prefWidth="55.0" />
+                  <Label text="Port:" />
+                  <TextField fx:id="port_field" prefHeight="25.0" prefWidth="55.0" HBox.hgrow="ALWAYS">
+                     <HBox.margin>
+                        <Insets left="12.0" right="10.0" />
+                     </HBox.margin>
+                  </TextField>
                </children>
             </HBox>
          </children>
-      </HBox>
+      </VBox>
       <ButtonBar prefHeight="40.0" VBox.vgrow="ALWAYS">
           <buttons>
             <Button mnemonicParsing="false" onAction="#onExit" text="Exit" ButtonBar.buttonData="LEFT" />
