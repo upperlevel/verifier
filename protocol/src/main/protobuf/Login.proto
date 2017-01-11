@@ -1,0 +1,11 @@
+syntax = "proto3";
+package verifier;
+
+option java_package = "xyz.upperlevel.verifier.proto.protobuf";
+option java_outer_classname = "LoginPacket";
+
+message Login {
+  string clazz = 1;
+  string user = 2;
+  string password = 3;
+}

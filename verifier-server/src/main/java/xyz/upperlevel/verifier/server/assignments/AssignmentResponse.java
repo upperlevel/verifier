@@ -1,16 +1,17 @@
 package xyz.upperlevel.verifier.server.assignments;
 
+import com.google.protobuf.Timestamp;
 import lombok.Getter;
 import xyz.upperlevel.verifier.exercises.ExerciseRequest;
 import xyz.upperlevel.verifier.exercises.ExerciseResponse;
 import xyz.upperlevel.verifier.exercises.ExerciseType;
 import xyz.upperlevel.verifier.exercises.ExerciseTypeManager;
 import xyz.upperlevel.verifier.exercises.util.Fraction;
-import xyz.upperlevel.verifier.proto.AssignmentPacket;
-import xyz.upperlevel.verifier.proto.ExerciseData;
+import xyz.upperlevel.verifier.proto.protobuf.AssignmentPacket;
+import xyz.upperlevel.verifier.proto.protobuf.AssignmentPacket.ExerciseData;
 import xyz.upperlevel.verifier.server.Main;
 
-import java.time.LocalTime;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -23,10 +24,10 @@ public class AssignmentResponse {
     @Getter
     private final String id;
 
-    private final LocalTime commitTime;
-    private final LocalTime endTime;
+    private final Timestamp commitTime;
+    private final Timestamp endTime;
 
-    public AssignmentResponse(List<ExerciseResponse<?, ?>> exercises, String id, LocalTime commitTime, LocalTime endTime) {
+    public AssignmentResponse(List<ExerciseResponse<?, ?>> exercises, String id, Timestamp commitTime, Timestamp endTime) {
         this.exercises = exercises;
         this.id = id;
         this.commitTime = commitTime;
@@ -34,19 +35,21 @@ public class AssignmentResponse {
     }
 
     @SuppressWarnings("unchecked")
-    public AssignmentResponse(AssignmentPacket packet, AssignmentRequest req, Random random) {
+    public AssignmentResponse(AssignmentPacket.Assignment packet, AssignmentRequest req, Random random) {
         this.id = packet.getId();
-        this.commitTime = LocalTime.now();
+        this.commitTime = now();
         this.endTime = req.getEndTime();
 
-        int[] mapping = IntStream.range(0, packet.getExercises().size()).toArray();
-        Collections.shuffle(Arrays.asList(mapping), random);
+        List<ExerciseData> in = packet.getDatasList();
 
-        ExerciseData[] exes = new ExerciseData[mapping.length];
+        List<Integer> mapping = IntStream.range(0, in.size()).boxed().collect(Collectors.toList());
+        Collections.shuffle(mapping, random);
+
+        ExerciseData[] exes = new ExerciseData[mapping.size()];
 
         {//demap
             for(int i = 0; i < exes.length; i++)
-                exes[mapping[i]] = packet.getExercises().get(i);
+                exes[mapping.get(i)] = in.get(i);
         }
 
         ExerciseResponse<?, ?>[] decoded = new ExerciseResponse[exes.length];
@@ -58,6 +61,14 @@ public class AssignmentResponse {
         }
 
         this.exercises = Arrays.asList(decoded);
+    }
+
+    private Timestamp now() {
+        Instant now = Instant.now();
+        return Timestamp.newBuilder()
+                .setSeconds(now.getEpochSecond())
+                .setNanos(now.getNano())
+                .build();
     }
 
     public Map<String, Object> toYaml() {

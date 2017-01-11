@@ -8,8 +8,8 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.ssl.SslHandler;
 import xyz.upperlevel.commandapi.CommandHandler;
 import xyz.upperlevel.verifier.packetlib.simple.SimpleServer.SimpleServerOptions;
-import xyz.upperlevel.verifier.proto.ErrorType;
 import xyz.upperlevel.verifier.proto.ProtocolUtils;
+import xyz.upperlevel.verifier.proto.protobuf.ErrorPacket;
 import xyz.upperlevel.verifier.server.ui.UI;
 
 import javax.net.ssl.SSLException;
@@ -80,7 +80,7 @@ public class ConsoleUI implements UI {
     }
 
     @Override
-    public void error(ErrorType type, String message) {
+    public void error(ErrorPacket.ErrorType type, String message) {
         System.err.println("[ERROR]" + type.name() + "->" + message);
     }
 

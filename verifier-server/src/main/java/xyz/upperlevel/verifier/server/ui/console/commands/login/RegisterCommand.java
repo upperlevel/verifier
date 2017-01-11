@@ -7,6 +7,8 @@ import xyz.upperlevel.verifier.packetlib.utils.ByteSecurityUtil;
 import xyz.upperlevel.verifier.server.Main;
 import xyz.upperlevel.verifier.server.login.LoginManager;
 
+import static xyz.upperlevel.verifier.packetlib.utils.ByteSecurityUtil.zero;
+
 public class RegisterCommand extends Command {
     public RegisterCommand() {
         super("register", "registers a user");
@@ -22,10 +24,11 @@ public class RegisterCommand extends Command {
             return;
         }
         LoginManager manager = Main.getLoginManager();
-        if(manager.register(clazz, username, pssw)) {
+        if(manager.register(clazz, username, String.valueOf(pssw))) {
             System.out.println("User successfully registered, use \"login save\" to save the current changes");
         } else {
             System.out.println("Cannot register user: one with the same class and username already exists!");
         }
+        zero(pssw);
     }
 }

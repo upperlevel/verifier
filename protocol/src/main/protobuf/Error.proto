@@ -1,0 +1,20 @@
+syntax = "proto3";
+package verifier;
+
+option java_package = "xyz.upperlevel.verifier.proto.protobuf";
+option java_outer_classname = "ErrorPacket";
+
+message Error {
+  ErrorType type = 1;
+  string message = 2; 
+}
+
+enum ErrorType {
+  E_UNKNOWN = 0;
+  LOGIN = 1;
+  ASSIGNMENT = 2;
+  TEST_TYPE = 3;
+  MISC = 4;
+  NOT_LOGGED_ID = 5;
+  BAD_PROTOCOL = 6;
+}

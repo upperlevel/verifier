@@ -1,0 +1,15 @@
+syntax = "proto3";
+package verifier;
+
+option java_package = "xyz.upperlevel.verifier.proto.protobuf";
+option java_outer_classname = "AssignmentPacket";
+
+message Assignment {
+  string id = 1;
+  repeated ExerciseData datas = 2; 
+}
+
+message ExerciseData {
+  string type = 1;
+  string data = 2;
+}

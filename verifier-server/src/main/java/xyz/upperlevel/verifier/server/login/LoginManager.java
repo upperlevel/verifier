@@ -1,17 +1,15 @@
  package xyz.upperlevel.verifier.server.login;
 
  import com.google.common.io.Files;
- import lombok.Getter;
- import xyz.upperlevel.verifier.server.ClientHandler;
+import lombok.Getter;
+import xyz.upperlevel.verifier.server.ClientHandler;
 
- import java.io.*;
- import java.text.DateFormat;
- import java.text.SimpleDateFormat;
- import java.util.*;
- import java.util.concurrent.locks.StampedLock;
- import java.util.stream.Collectors;
-
- import static xyz.upperlevel.verifier.packetlib.utils.ByteSecurityUtil.zero;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.locks.StampedLock;
+import java.util.stream.Collectors;
 
  public class LoginManager {
      public static final File FOLDER = new File("users");
@@ -61,7 +59,7 @@
      }
 
 
-     public boolean register(String clazz, String userame, char[] password) {
+     public boolean register(String clazz, String userame, String password) {
          clazz = clazz.toLowerCase();
          long stamp = lock.writeLock();
          try {
@@ -99,7 +97,6 @@
                          client.authLock.unlockWrite(st2);
                      }
                  }
-                 zero(data.getPassword());
              }
          } finally {
              lock.unlockWrite(stamp);
@@ -250,7 +247,7 @@
                      System.err.println("[WARNING] wrong formatting in file \"" + file.getName() + "\", it must be \"username password\"");
                      continue;
                  }
-                 AuthData data = new AuthData(clazz, strs[0], strs[1].toCharArray());//TODO: better password managment
+                 AuthData data = new AuthData(clazz, strs[0], strs[1]);
                  scholars.put(data.getUsername(), data);
                  nonMapped.add(data);
              }

@@ -1,5 +1,6 @@
 package xyz.upperlevel.verifier.server.ui.console.commands.assignment.time;
 
+import com.google.protobuf.Timestamp;
 import xyz.upperlevel.commandapi.commands.Command;
 import xyz.upperlevel.commandapi.executor.CommandRunner;
 import xyz.upperlevel.commandapi.executor.ParamName;
@@ -21,7 +22,7 @@ public class SetCommand extends Command {
             System.out.println("No assignment loaded!");
             return;
         }
-        LocalTime lt;
+        Timestamp lt;
 
         try {
             lt = TimeSettings.formatter.parse(time, LocalTime::from);

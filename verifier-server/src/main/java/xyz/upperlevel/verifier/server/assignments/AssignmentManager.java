@@ -1,7 +1,7 @@
 package xyz.upperlevel.verifier.server.assignments;
 
 import lombok.Getter;
-import xyz.upperlevel.verifier.proto.ErrorType;
+import xyz.upperlevel.verifier.proto.protobuf.ErrorPacket;
 import xyz.upperlevel.verifier.server.Main;
 import xyz.upperlevel.verifier.server.assignments.converters.AssignmentConverter;
 import xyz.upperlevel.verifier.server.assignments.exceptions.AlreadyCommittedException;
@@ -58,7 +58,7 @@ public class AssignmentManager {
         try {
             AssignmentConverter.$.save(file, assignment.toYaml());
         } catch (IOException e) {
-            Main.getUi().error(ErrorType.MISC, "Error committing assignmnet: " + e.getMessage());
+            Main.getUi().error(ErrorPacket.ErrorType.MISC, "Error committing assignmnet: " + e.getMessage());
             e.printStackTrace();
         }
     }

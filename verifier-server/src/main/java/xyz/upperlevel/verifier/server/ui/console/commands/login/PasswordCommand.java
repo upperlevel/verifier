@@ -35,8 +35,8 @@ public class PasswordCommand extends Command {
         }
         char[] pssw = ByteSecurityUtil.askPassword();
         if(pssw != null) {
-            zero(data.getPassword());
-            data.setPassword(pssw);
+            data.setPassword(String.valueOf(pssw));
+            zero(pssw);
             System.out.println("New password set, use \"login save\" to save the current changes");
         } else
             System.out.println("Password NOT set");

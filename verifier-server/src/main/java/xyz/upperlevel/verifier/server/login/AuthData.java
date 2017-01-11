@@ -13,19 +13,19 @@ public class AuthData {
     @Getter
     private final String clazz;
     @Getter
-    private char[] password;
+    private String password;
 
     @Getter
     @Setter
     private ClientHandler logged = null;
 
-    public AuthData(String clazz, String username, char[] password) {
+    public AuthData(String clazz, String username, String password) {
         this.clazz = clazz;
         this.username = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(username.toLowerCase().split(" "))));
         this.password = password;
     }
 
-    public void setPassword(char[] password) {
+    public void setPassword(String password) {
         System.out.println("[WARNING]changed password of \"" + username + "\"!");
         this.password = password;
     }

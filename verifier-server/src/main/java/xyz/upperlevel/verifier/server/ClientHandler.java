@@ -2,17 +2,17 @@ package xyz.upperlevel.verifier.server;
 
 import io.netty.channel.Channel;
 import lombok.Getter;
-import xyz.upperlevel.verifier.exercises.ExerciseType;
-import xyz.upperlevel.verifier.proto.*;
+import xyz.upperlevel.verifier.proto.protobuf.AssignmentPacket;
+import xyz.upperlevel.verifier.proto.protobuf.ErrorPacket;
+import xyz.upperlevel.verifier.proto.protobuf.ErrorPacket.ErrorType;
+import xyz.upperlevel.verifier.proto.protobuf.LoginPacket;
+import xyz.upperlevel.verifier.proto.protobuf.TimePacket;
 import xyz.upperlevel.verifier.server.assignments.AssignmentRequest;
 import xyz.upperlevel.verifier.server.assignments.AssignmentResponse;
 import xyz.upperlevel.verifier.server.assignments.TimeSyncUtil;
 import xyz.upperlevel.verifier.server.assignments.exceptions.AlreadyCommittedException;
 import xyz.upperlevel.verifier.server.login.AuthData;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Random;
@@ -45,7 +45,7 @@ public class ClientHandler {
         }
     }
 
-    public void onAssignment(AssignmentPacket packet) {
+    public void onAssignment(AssignmentPacket.Assignment packet) {
         log("Received assignment packet");
         if(!checkLogged()) {
             log("[WARN] assignment before login");
@@ -53,7 +53,7 @@ public class ClientHandler {
         }
         if(sent != null && !packet.getId().equals(sent.getId())) {
             log("[WARN] bad assignment");
-            send(new ErrorPacket(ErrorType.ASSIGNMENT, "Bad assignment, sent:\"" + packet.getId() + "\" expected: \"" + sent.getId() + "\""));
+            error(ErrorType.ASSIGNMENT, "Bad assignment, sent:\"" + packet.getId() + "\" expected: \"" + sent.getId() + "\"");
             return;
         }
         try {
@@ -62,7 +62,7 @@ public class ClientHandler {
             try {
                 AssignmentRequest curr = Main.currentAssignment();
                 if(sent == null || !sent.getId().equals(packet.getId())) {
-                    send(new ErrorPacket(ErrorType.ASSIGNMENT, "Bad assignment type!"));
+                    error(ErrorType.ASSIGNMENT, "Bad assignment type!");
                 } else {
                     Main.getAssignmentManager().commit(data, new AssignmentResponse(packet, sent, new Random(data.toSeed())));
                 }
@@ -71,43 +71,29 @@ public class ClientHandler {
             }
         } catch (AlreadyCommittedException e) {
             log("[WARN] tried to commit an already-commited assignment");
-            send(new ErrorPacket(ErrorType.ASSIGNMENT, "Assignment already committed!"));
+            error(ErrorType.ASSIGNMENT, "Assignment already committed!");
         }
     }
 
-    public void onError(ErrorPacket packet) {
+    private void error(ErrorType errorType, String msg) {
+        send(
+                ErrorPacket.Error.newBuilder()
+                        .setType(errorType)
+                        .setMessage(msg)
+                        .build()
+        );
+    }
+
+    public void onError(ErrorPacket.Error packet) {
         Main.getUi().error(packet.getType(), packet.getMessage());
     }
 
-    public void onExeRequest(ExerciseTypePacket packet) {
-        log("Received exercise request");
-        if(!checkLogged()) {
-            log("[WARN] exercise request before login");
-            return;
-        }
-        ExerciseType type = Main.getExerciseTypeManager().get(packet.getName());
-        if(type == null) {
-            log("[WARN]Type not found: \"" + packet.getName() + "\"");
-            channel.writeAndFlush(new ErrorPacket(ErrorType.TEST_TYPE, "Type not found \"" + packet.getName() + "\""));
-            return;
-        }
-        Path file = Main.getExerciseTypeManager().getFile(type);
-        if(file == null)
-            return;
-        try {
-            send(new ExerciseTypePacket(packet.getName(), Files.readAllBytes(file)));
-        } catch (IOException e) {
-            System.err.println("[WARNING]Error finding jar of \"" + packet.getName() + "\"!");
-            e.printStackTrace();
-        }
-    }
-
-    public void onLogin(LoginPacket packet) {
+    public void onLogin(LoginPacket.Login packet) {
         AuthData data = Main.getLoginManager().get(packet.getClazz(), new HashSet<>(Arrays.asList(packet.getUser().toLowerCase().split(" "))));
         if (data == null) {
             log("Login error: bad username");
-            send(new ErrorPacket(ErrorType.LOGIN_BAD_USER, "Username not found"));
-        } else if (Arrays.equals(packet.getPassword(), data.getPassword())) {
+            error(ErrorType.LOGIN, "Username not found");
+        } else if (data.getPassword().equals(packet.getPassword())) {
             long stamp = authLock.writeLock();
             try {
                 this.data = data;
@@ -120,7 +106,7 @@ public class ClientHandler {
             sendAssignment();
         } else {
             log("Login error: bad password");
-            send(new ErrorPacket(ErrorType.LOGIN_BAD_PASSWORD, "Wrong password"));
+            error(ErrorType.LOGIN, "Wrong password");
         }
     }
 
@@ -128,7 +114,7 @@ public class ClientHandler {
         StampedLock lock = TimeSyncUtil.lock;
         long stamp = lock.readLock();
         try {
-            TimePacket packet = TimeSyncUtil.getPacket();
+            TimePacket.Time packet = TimeSyncUtil.getPacket();
             if(packet == null)
                 return;
             send(packet);
@@ -137,15 +123,15 @@ public class ClientHandler {
         }
     }
 
-    public void onTime(TimePacket packet) {
-        if(packet.getType() == TimePacket.PacketType.REQUEST) {
+    public void onTime(TimePacket.Time packet) {
+        if(packet.getOperation() == TimePacket.Operation.GET) {
             log("Request time! -> " + TimeSyncUtil.requireTime(data));
-        } else if(packet.getType() == TimePacket.PacketType.REQUEST) {
+        } else if(packet.getOperation() == TimePacket.Operation.SET) {
             log("Packet error: client sent a SET time packet!");
-            send(new ErrorPacket(ErrorType.BAD_PROTOCOL, "The client can't send a SET time packet"));
+            error(ErrorType.BAD_PROTOCOL, "The client can't send a SET time packet");
         } else {
-            log("Packet error: Time packet not implemented yet: " + packet.getType().name());
-            send(new ErrorPacket(ErrorType.BAD_PROTOCOL, "Time packet " + packet.getType().name() + " not implemented!"));
+            log("Packet error: Time packet not implemented yet: " + packet.getOperation().name());
+            error(ErrorType.BAD_PROTOCOL, "Time packet " + packet.getOperation().name() + " not implemented!");
         }
     }
 
@@ -169,7 +155,7 @@ public class ClientHandler {
     }
 
     private void badProtocolStateError() {
-        send(new ErrorPacket(ErrorType.NOT_LOGGED_ID, "You can do this operation only after login"));
+        error(ErrorType.NOT_LOGGED_ID, "You can do this operation only after login");
     }
 
     private void log(String str) {

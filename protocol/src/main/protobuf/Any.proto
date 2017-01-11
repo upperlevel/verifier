@@ -1,0 +1,19 @@
+syntax = "proto3";
+package verifier;
+
+option java_package = "xyz.upperlevel.verifier.proto.protobuf";
+option java_outer_classname = "AnyPacket";
+
+import "Assignment.proto";
+import "Error.proto";
+import "Login.proto";
+import "Time.proto";
+
+message Any {
+  oneof mex {
+    verifier.Assignment assignment = 1;
+    Error error = 2;
+    Login login = 3;
+    Time time = 4;
+  }
+}

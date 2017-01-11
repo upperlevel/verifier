@@ -1,13 +1,13 @@
 package xyz.upperlevel.verifier.server.assignments;
 
+import com.google.protobuf.Timestamp;
 import lombok.Getter;
-import xyz.upperlevel.verifier.proto.TimePacket;
+import xyz.upperlevel.verifier.proto.protobuf.TimePacket;
 import xyz.upperlevel.verifier.server.ClientHandler;
 import xyz.upperlevel.verifier.server.Main;
 import xyz.upperlevel.verifier.server.login.AuthData;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +20,7 @@ public class TimeSyncUtil {
 
     public static final StampedLock lock = new StampedLock();
     @Getter
-    private static TimePacket packet = null;
+    private static TimePacket.Time packet = null;
 
     public static Set<AuthData> req = ConcurrentHashMap.newKeySet();
 
@@ -28,8 +28,13 @@ public class TimeSyncUtil {
 
     private static Timer timer = null;
 
-    public static void setTime(LocalTime date) {
-        final TimePacket packet = new TimePacket(TimePacket.PacketType.SET, date);
+    public static void setTime(Timestamp date) {
+        final TimePacket.Time packet = TimePacket.Time.newBuilder()
+                .setOperation(TimePacket.Operation.SET)
+                .setTime(date)
+                .build();
+
+
         long stamp = lock.writeLock();
         try {
             TimeSyncUtil.packet = packet;
